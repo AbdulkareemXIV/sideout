@@ -9,7 +9,32 @@
     "ar": "العربية"
   },
   "Home": {
-    "heading": "Sideout Academy",
-    "intro": "One shared system for squads, practices, matches and player development."
+    "signedInAs": "Signed in as {name}",
+    "signOut": "Sign out"
+  },
+  "Roles": {
+    "director": "Academy director",
+    "coach": "Coach",
+    "player": "Player"
+  },
+  "SignIn": {
+    "title": "Sign in",
+    "subtitle": "Use the username and password you were given.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "invalid": "That username and password do not match an account."
+  },
+  "ChangePassword": {
+    "title": "Choose a new password",
+    "subtitle": "This is your first sign-in, so set a password only you know.",
+    "password": "New password",
+    "confirmation": "Repeat the new password",
+    "submit": "Save password",
+    "submitting": "Saving…",
+    "mismatch": "The two passwords are not the same.",
+    "tooShort": "Use at least 8 characters.",
+    "failed": "The password could not be changed. Try again."
   }
 }
