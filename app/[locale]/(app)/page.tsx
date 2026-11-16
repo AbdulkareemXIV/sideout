@@ -1,7 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { signOut } from "@/lib/auth/actions";
+import { Link } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations("Home");
+  const nav = await getTranslations("Nav");
   const roles = await getTranslations("Roles");
 
   const supabase = await createClient();
@@ -46,6 +48,19 @@ export default async function HomePage({ params }: Props) {
         ) : null}
       </div>
 
+      <nav className="flex flex-wrap gap-2">
+        <Link href="/squads" className={buttonVariants({ variant: "outline" })}>
+          {nav("squads")}
+        </Link>
+        {profile?.role === "director" ? (
+          <Link
+            href="/academy"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            {nav("academy")}
+          </Link>
+        ) : null}
+      </nav>
       <form action={signOut.bind(null, locale)}>
         <Button type="submit" variant="outline">
           {t("signOut")}

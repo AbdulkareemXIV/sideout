@@ -8,6 +8,10 @@
     "en": "English",
     "ar": "العربية"
   },
+  "Nav": {
+    "squads": "Squads",
+    "academy": "Academy settings"
+  },
   "Home": {
     "signedInAs": "Signed in as {name}",
     "signOut": "Sign out"
@@ -36,5 +40,39 @@
     "mismatch": "The two passwords are not the same.",
     "tooShort": "Use at least 8 characters.",
     "failed": "The password could not be changed. Try again."
+  },
+  "Academy": {
+    "title": "Academy settings",
+    "subtitle": "The academy name, the season dates and the default match format.",
+    "missing": "The academy has not been set up yet.",
+    "name": "Academy name",
+    "seasonStart": "Season starts",
+    "seasonEnd": "Season ends",
+    "defaultBestOf": "Default match format",
+    "bestOf3": "Best of 3",
+    "bestOf5": "Best of 5",
+    "defaultSetPoints": "Default points per set",
+    "points15": "15 points",
+    "points21": "21 points",
+    "points25": "25 points",
+    "save": "Save settings",
+    "saving": "Saving…",
+    "saved": "Settings saved.",
+    "forbidden": "Only the academy director can change these settings.",
+    "invalidInput": "Check the dates: the season has to end after it starts.",
+    "failed": "The settings could not be saved. Try again."
+  },
+  "Squads": {
+    "title": "Squads",
+    "subtitle": "Age groups and the players in each of them.",
+    "empty": "No squads yet.",
+    "name": "Squad name",
+    "ageGroup": "Age group",
+    "players": "{count, plural, =0 {No players} one {# player} other {# players}}",
+    "create": "Create squad",
+    "creating": "Creating…",
+    "forbidden": "Only the academy director can create squads.",
+    "invalidInput": "Give the squad a name and an age group.",
+    "failed": "The squad could not be created. Try again."
   }
 }

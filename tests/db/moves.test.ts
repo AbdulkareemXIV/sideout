@@ -30,16 +30,19 @@ describe("moving a player between squads", () => {
       .select("squad_id, start_date, end_date")
       .eq("player_id", world.playerInA.id);
 
-    expect(history).toHaveLength(2);
+    const rows = history ?? [];
+    expect(rows).toHaveLength(2);
 
-    const open = (history ?? []).filter((row) => row.end_date === null);
+    const open = rows.filter((row) => row.end_date === null);
     expect(open).toHaveLength(1);
-    expect(open[0].squad_id).toBe(world.squadB.id);
+    expect(open[0]?.squad_id).toBe(world.squadB.id);
 
-    const closed = (history ?? []).filter((row) => row.end_date !== null);
+    const closed = rows.filter((row) => row.end_date !== null);
     expect(closed).toHaveLength(1);
-    expect(closed[0].squad_id).toBe(world.squadA.id);
-    expect(closed[0].end_date! > closed[0].start_date).toBe(true);
+    expect(closed[0]?.squad_id).toBe(world.squadA.id);
+    expect((closed[0]?.end_date ?? "") > (closed[0]?.start_date ?? "")).toBe(
+      true,
+    );
   });
 
   it("hands the player to the coach of the new squad", async () => {
