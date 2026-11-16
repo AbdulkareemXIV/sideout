@@ -1,0 +1,15 @@
+{
+  "Metadata": {
+    "title": "Sideout Academy",
+    "description": "Squads, practices, matches and player development in one place."
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "Home": {
+    "heading": "Sideout Academy",
+    "intro": "One shared system for squads, practices, matches and player development."
+  }
+}
