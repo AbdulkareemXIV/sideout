@@ -21,5 +21,21 @@ export const changePasswordSchema = z
     path: ["confirmation"],
   });
 
-export type SignInInput = z.infer<typeof signInSchema>;
+export const createCoachAccountSchema = z.object({
+  username: usernameField,
+  fullName: z.string().trim().min(1).max(120),
+});
+
+export const createPlayerAccountSchema = z.object({
+  username: usernameField,
+  playerId: z.uuid(),
+});
+
+export const resetPasswordSchema = z.object({
+  profileId: z.uuid(),
+});
+
+export type CreateCoachAccountInput = z.infer<typeof createCoachAccountSchema>;
+export type CreatePlayerAccountInput = z.infer<typeof createPlayerAccountSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

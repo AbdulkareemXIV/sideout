@@ -10,3 +10,15 @@ export function supabaseEnv(): { url: string; publishableKey: string } {
 
   return { url, publishableKey };
 }
+
+export function supabaseSecretKey(): string {
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+
+  if (!secretKey) {
+    throw new Error(
+      "Missing SUPABASE_SECRET_KEY. Run `npm run setup` to create .env.local.",
+    );
+  }
+
+  return secretKey;
+}
