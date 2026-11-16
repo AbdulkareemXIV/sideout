@@ -155,6 +155,9 @@ isOneToOne: false
 "coaches_squad":
 { Args: { "target_squad_id": string }; Returns: boolean
                            },
+"move_player":
+{ Args: { "target_player_id": string,"target_squad_id": string }; Returns: undefined
+                           },
 "own_player_id":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
