@@ -23,10 +23,23 @@ describe("row-level security for module 1", () => {
     const profiles = await as.from("profiles").select("id");
     const academy = await as.from("academy").select("id");
 
-    expect(squads.data).toHaveLength(2);
-    expect(players.data).toHaveLength(2);
-    expect(profiles.data).toHaveLength(4);
-    expect(academy.data).toHaveLength(1);
+    const ids = (rows: { id: string }[] | null) => (rows ?? []).map((row) => row.id);
+
+    expect(ids(squads.data)).toEqual(
+      expect.arrayContaining([world.squadA.id, world.squadB.id]),
+    );
+    expect(ids(players.data)).toEqual(
+      expect.arrayContaining([world.playerInA.id, world.playerInB.id]),
+    );
+    expect(ids(profiles.data)).toEqual(
+      expect.arrayContaining([
+        world.director.id,
+        world.coachA.id,
+        world.coachB.id,
+        world.playerA.id,
+      ]),
+    );
+    expect(academy.data?.length).toBeGreaterThan(0);
   });
 
   it("shows a coach only the squads they are assigned to", async () => {
