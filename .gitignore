@@ -147,3 +147,16 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Next.js
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Supabase CLI
+supabase/.temp
+supabase/.branches
+
+# OS
+.DS_Store

@@ -10,7 +10,7 @@ For the demo, the academy is filled with fictional people and a season of histor
 
 ### Acceptance criteria
 
-- A coach can run a full match in match mode on a phone or tablet, with undo, and the stats appear on player profiles afterwards.
+- A coach can run a full match in match mode in a desktop browser, with undo, and the stats appear on player profiles afterwards.
 - Rotation faults and overlap errors are detected correctly, verified by automated tests.
 - A coach cannot see or modify data from squads they are not assigned to, enforced at the database level.
 - The application is publicly deployed with a working demo account for each role.
@@ -56,8 +56,8 @@ Sideout is made of seven modules.
 The foundation every other module builds on.
 
 - Each deployment serves one academy. The academy and its director account are created by the seed script; there is no academy sign-up.
-- The academy has a name, logo and settings: current season dates, default match format and default points per set.
-- Squads are grouped by age or level, for example U14, U16, U18 and Senior, each with a gender category.
+- The academy has a name, logo and current season dates. Match format and points per set are chosen per match in match mode, not stored as academy settings.
+- Squads are grouped by age or level, for example U14, U16, U18 and Senior.
 - Players have a profile record (name, date of birth, jersey number, primary and secondary positions, dominant hand, height) and belong to exactly one squad at a time.
 - Every player has a read-only account linked to their profile (see Accounts below).
 - Squad membership is stored as a history: when the director moves a player from U16 to U18, the old membership is closed with an end date and a new one starts. Nothing is lost.
@@ -86,7 +86,7 @@ An interactive court for building and checking lineups.
 
 ### 3. Match mode
 
-One screen that combines a digital scoresheet and a live stat tracker. Designed for a phone or tablet held courtside.
+One screen that combines a digital scoresheet and a live stat tracker. Designed to be run from a laptop courtside.
 
 **Setup.** The coach selects the squad, the opponent (an outside team by name, or another squad in the academy for internal scrimmages, logged from one squad's side with the other treated as the opponent), match format (best of 3 or 5), points per set (25 by default, or shorter for youth matches), the starting lineup and which team serves first.
 
@@ -248,9 +248,9 @@ The database is relational (PostgreSQL). Each deployment holds one academy, so t
 
 | Entity | Module | Key fields |
 | --- | --- | --- |
-| academy | 1 | a single row: name, logo\_url, season\_start, season\_end, default\_best\_of, default\_set\_points |
+| academy | 1 | a single row: name, logo\_url, season\_start, season\_end |
 | profiles | 1 | id (auth user id), role (director, coach, player), username, full\_name, must\_change\_password, preferred\_language |
-| squads | 1 | name, age\_group, gender |
+| squads | 1 | name, age\_group |
 | coach\_assignments | 1 | coach\_id, squad\_id |
 | players | 1 | user\_id (the player's read-only account), full\_name, date\_of\_birth, jersey\_number, primary\_position, secondary\_position, dominant\_hand, height\_cm |
 | squad\_memberships | 1 | player\_id, squad\_id, start\_date, end\_date (null while current) |
@@ -349,7 +349,7 @@ Access rules are enforced in the database, not only in the interface. Hiding a b
 ### Row-level security basics
 
 - Row-level security (RLS) is enabled on every table.
-- Helper SQL functions keep policies readable, for example `current_role()` and `coaches_squad(squad_id)`.
+- Helper SQL functions keep policies readable, for example `app_role()` and `coaches_squad(squad_id)`.
 
 ### Role and squad scoping
 
@@ -430,13 +430,50 @@ A player with fewer than 10 attempts in a category shows the metric greyed out, 
 
 | Area | Requirement |
 | --- | --- |
-| Responsiveness | Logging a stat takes two taps and updates the score and rotation on screen straight away. |
-| Devices | Match mode is designed for phones and tablets in portrait and landscape, with touch targets at least 48 px. Management screens work on desktop and mobile. Times are stored in UTC and shown in the Asia/Riyadh time zone. |
+| Responsiveness | Logging a stat takes two clicks and updates the score and rotation on screen straight away. |
+| Devices | Desktop browsers only: the site is not supported on phones or tablets, and layouts are designed for laptop and desktop screens. Times are stored in UTC and shown in the Asia/Riyadh time zone. |
 | Languages | The interface is built with an internationalization layer. English and Arabic are both supported from the start, with full right-to-left layout for Arabic. Arabic text is drafted with the AI and reviewed by a native speaker. Translations use next-intl. |
 | Accessibility | Sufficient color contrast, keyboard navigation on desktop, and court diagrams that never rely on color alone (positions are also numbered). |
 | Reliability | Every write is validated on the server. Replaying the same event log always produces the same result. |
 | Performance | Main pages load in under 2 seconds on a typical 4G connection. Profiles and dashboards use precomputed or cached aggregates when data grows. |
 | Auditability | Match events and ratings keep who made them and when. |
+
+## Interface and user experience
+
+Sideout should feel like a finished product, not a prototype. Simplicity applies to code and scope, never to how the site feels to use. These rules apply to every screen, including screens the modules do not describe in detail. Sideout runs in desktop browsers only, so no screen needs a phone layout.
+
+### Visual identity
+
+- Colors: deep navy `#0d1726`, sand `#f2ede3` as the light background, and court orange `#f28a2e` as the accent for primary actions, plus neutral grays for borders and secondary text. Text and controls meet WCAG AA contrast.
+- Fonts: Oswald for headings and scores, Public Sans for body text, and IBM Plex Sans Arabic for all Arabic text.
+- Light theme only. Spacing, corners and shadows come from the shared shadcn/ui theme tokens, never one-off styles.
+- A simple Sideout wordmark appears in the header and on the sign-in page.
+
+### Layout and navigation
+
+- Signed-in users get one app shell: a header with the academy name, the user's name and role, the language switch and sign-out, and a navigation menu listing only the sections their role can reach, with the current section highlighted.
+- Every page has a clear title. Pages below the top level show breadcrumbs (for example Squads › U16 › Sara) and a back link to the parent page.
+- After sign-in, each role lands on a sensible home page: the director on the academy overview (the squads list until the dashboard exists), a coach on their squads, a player on their own profile.
+- Unknown or refused addresses show a friendly page with a link home, never a raw error.
+
+### Feedback and states
+
+- Every form field has a label; required fields are marked; validation messages appear next to the field in the user's language; the submit button is disabled and shows progress while saving.
+- Successes and failures show a short toast, for example "Player added".
+- Destructive or irreversible actions (deleting, moving a player, resetting a password) ask for confirmation in a dialog that says exactly what will happen.
+- Empty lists explain what belongs there and offer the next action, for example "No players yet. Add the first player."
+- Pages show loading skeletons instead of blank screens.
+- Temporary passwords appear in a dialog with a copy button and a note that they will not be shown again.
+
+### Lists and data
+
+- Lists longer than one screen have search, plus filters where useful (for example by position).
+- Names link to their detail pages.
+- Dates, times and numbers are formatted for the active language.
+
+### Accessibility
+
+- Everything works with a keyboard, focus is always visible, and dialogs trap focus and close with Escape.
 
 ## Build order
 
@@ -522,7 +559,7 @@ This section is written for the AI model assisting with development. This docume
 4. Keep every change small enough to review, and explain what changed and why. Use one branch per module and merge it when the module works.
 5. Never invent volleyball rules. If a rule is not covered in the Volleyball domain rules section, ask.
 6. When a decision changes this specification, say so explicitly so the document can be updated.
-7. Prefer the simplest solution that meets the requirement. Do not add libraries, abstractions or configuration this document does not call for.
+7. Prefer the simplest solution that meets the requirement. Do not add libraries, abstractions or configuration this document does not call for. Simplicity applies to code, dependencies and scope, never to usability: every screen meets the Interface and user experience section, even where a module does not spell it out.
 
 ### Project structure
 
@@ -553,5 +590,5 @@ This section is written for the AI model assisting with development. This docume
 - Requirements in this document are met.
 - Unit tests cover the logic; database tests cover any new access rules.
 - Type checking, linting and all tests pass in CI.
-- The feature works on a phone-sized screen, in both English and Arabic.
+- The feature works in both English and Arabic and meets the Interface and user experience section.
 - The seed data exercises the feature so it can be demonstrated.

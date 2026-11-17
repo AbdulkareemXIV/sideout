@@ -1,0 +1,168 @@
+{
+  "Metadata": {
+    "title": "Sideout Academy",
+    "description": "Squads, practices, matches and player development in one place."
+  },
+  "Common": {
+    "breadcrumbs": "Breadcrumb",
+    "home": "Go to my home page",
+    "loading": "Loading…"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "This page does not exist, or you do not have access to it.",
+    "home": "Go to my home page"
+  },
+  "Error": {
+    "title": "Something went wrong",
+    "description": "The page could not be loaded. Try again, or go back to your home page.",
+    "retry": "Try again",
+    "home": "Go to my home page"
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "Nav": {
+    "squads": "Squads",
+    "academy": "Academy settings",
+    "label": "Sections",
+    "home": "Sideout home"
+  },
+  "Home": {
+    "signedInAs": "Signed in as {name}",
+    "signOut": "Sign out"
+  },
+  "Roles": {
+    "director": "Academy director",
+    "coach": "Coach",
+    "player": "Player"
+  },
+  "SignIn": {
+    "title": "Sign in",
+    "subtitle": "Use the username and password you were given.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "invalid": "That username and password do not match an account."
+  },
+  "ChangePassword": {
+    "title": "Choose a new password",
+    "subtitle": "This is your first sign-in, so set a password only you know.",
+    "password": "New password",
+    "confirmation": "Repeat the new password",
+    "submit": "Save password",
+    "submitting": "Saving…",
+    "mismatch": "The two passwords are not the same.",
+    "tooShort": "Use at least 8 characters.",
+    "failed": "The password could not be changed. Try again."
+  },
+  "Academy": {
+    "title": "Academy settings",
+    "subtitle": "The academy name and the season dates.",
+    "missing": "The academy has not been set up yet.",
+    "name": "Academy name",
+    "seasonStart": "Season starts",
+    "seasonEnd": "Season ends",
+    "save": "Save settings",
+    "saving": "Saving…",
+    "saved": "Settings saved.",
+    "forbidden": "Only the academy director can change these settings.",
+    "invalidInput": "Check the dates: the season has to end after it starts.",
+    "failed": "The settings could not be saved. Try again.",
+    "required": "Required"
+  },
+  "Squads": {
+    "title": "Squads",
+    "subtitle": "Age groups and the players in each of them.",
+    "empty": "No squads yet.",
+    "name": "Squad name",
+    "ageGroup": "Age group",
+    "players": "{count, plural, =0 {No players} one {# player} other {# players}}",
+    "create": "Create squad",
+    "creating": "Creating…",
+    "forbidden": "Only the academy director can create squads.",
+    "invalidInput": "Give the squad a name and an age group.",
+    "failed": "The squad could not be created. Try again.",
+    "required": "Required",
+    "squadCreated": "Squad created.",
+    "search": "Search squads",
+    "searchPlaceholder": "Name or age group",
+    "noResults": "No squads match “{query}”.",
+    "emptyDirector": "No squads yet. Create the first one above.",
+    "emptyCoach": "No squads are assigned to you yet."
+  },
+  "Squad": {
+    "back": "All squads",
+    "roster": "Roster",
+    "emptyRoster": "No players in this squad yet. Add the first player below.",
+    "name": "Player name",
+    "jersey": "Jersey number",
+    "position": "Position",
+    "hand": "Dominant hand",
+    "dateOfBirth": "Date of birth",
+    "height": "Height in cm",
+    "addPlayer": "Add a player",
+    "add": "Add player",
+    "adding": "Adding…",
+    "coaches": "Coaches",
+    "noCoaches": "No coaches assigned yet.",
+    "assignCoach": "Assign a coach",
+    "assign": "Assign",
+    "remove": "Remove",
+    "move": "Move to",
+    "moveSubmit": "Move",
+    "moving": "Moving…",
+    "username": "Username",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating…",
+    "resetPassword": "Reset password",
+    "resetting": "Resetting…",
+    "temporaryPasswordNote": "Write it down and give it in person; it is shown only once.",
+    "forbidden": "You do not have permission to do that.",
+    "invalidInput": "Check the values you entered.",
+    "failed": "That did not work. Try again.",
+    "sameSquad": "The player is already in this squad.",
+    "usernameTaken": "That username is already taken.",
+    "notFound": "That record no longer exists.",
+    "alreadyHasAccount": "This player already has an account.",
+    "positions": {
+      "outside_hitter": "Outside hitter",
+      "opposite": "Opposite",
+      "setter": "Setter",
+      "middle_blocker": "Middle blocker",
+      "libero": "Libero",
+      "defensive_specialist": "Defensive specialist"
+    },
+    "hands": {
+      "right": "Right",
+      "left": "Left",
+      "both": "Both"
+    },
+    "required": "Required",
+    "playerAdded": "Player added.",
+    "playerMoved": "Player moved.",
+    "coachAssigned": "Coach assigned.",
+    "coachRemoved": "Coach removed.",
+    "assigning": "Assigning…",
+    "moveConfirmTitle": "Move this player?",
+    "moveConfirm": "Move {player} to {squad}? Their membership in this squad is closed with an end date, and their history is kept.",
+    "resetConfirmTitle": "Reset this password?",
+    "resetConfirm": "Reset the password for {player}? A new temporary password is shown once, and they must choose a new one at their next sign-in.",
+    "removeCoachConfirmTitle": "Remove this coach?",
+    "removeCoachConfirm": "Remove {coach} from this squad? They lose access to its players.",
+    "cancel": "Cancel",
+    "accountCreatedTitle": "Account created",
+    "passwordResetTitle": "New temporary password",
+    "copyPassword": "Copy password",
+    "passwordCopied": "Copied",
+    "close": "Close",
+    "search": "Search players",
+    "searchPlaceholder": "Player name",
+    "filterPosition": "Filter by position",
+    "allPositions": "All positions",
+    "noResults": "No players match your search."
+  }
+}
