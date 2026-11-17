@@ -1,9 +1,17 @@
 import { getTranslations } from "next-intl/server";
 
 import { Wordmark } from "@/components/wordmark";
+import { redirectIfSignedIn } from "@/lib/auth/actions";
 import { SignInForm } from "./sign-in-form";
 
-export default async function SignInPage() {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function SignInPage({ params }: Props) {
+  const { locale } = await params;
+  await redirectIfSignedIn(locale);
+
   const t = await getTranslations("SignIn");
 
   return (
