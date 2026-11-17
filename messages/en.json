@@ -28,7 +28,8 @@
     "squads": "Squads",
     "academy": "Academy settings",
     "label": "Sections",
-    "home": "Sideout home"
+    "home": "Sideout home",
+    "matches": "Match Mode"
   },
   "Home": {
     "signedInAs": "Signed in as {name}",
