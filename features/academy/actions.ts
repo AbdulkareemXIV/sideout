@@ -9,6 +9,7 @@ import { academySchema } from "./schemas";
 export type AcademyState = {
   error: "forbidden" | "invalidInput" | "failed" | null;
   saved: boolean;
+  field?: string | null;
 };
 
 export async function updateAcademy(
@@ -34,7 +35,11 @@ export async function updateAcademy(
   });
 
   if (!parsed.success) {
-    return { error: "invalidInput", saved: false };
+    return {
+      error: "invalidInput",
+      saved: false,
+      field: parsed.error.issues[0]?.path.join(".") ?? null,
+    };
   }
 
   const { data: academy } = await supabase.from("academy").select("id").single();

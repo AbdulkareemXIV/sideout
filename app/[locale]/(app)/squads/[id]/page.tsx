@@ -143,6 +143,7 @@ export default async function SquadPage({ params }: Props) {
                   {isDirector && otherSquads && otherSquads.length > 0 ? (
                     <MovePlayerForm
                       playerId={player.id}
+                      playerName={player.full_name}
                       squads={otherSquads}
                     />
                   ) : null}
@@ -152,6 +153,7 @@ export default async function SquadPage({ params }: Props) {
                   <div className="mt-3 border-t pt-3">
                     <AccountControl
                       playerId={player.id}
+                      playerName={player.full_name}
                       hasAccount={Boolean(player.user_id)}
                     />
                   </div>
@@ -183,7 +185,11 @@ export default async function SquadPage({ params }: Props) {
                   </span>
                 </span>
                 {isDirector ? (
-                  <RemoveCoachForm squadId={squad.id} coachId={coach.id} />
+                  <RemoveCoachForm
+                    squadId={squad.id}
+                    coachId={coach.id}
+                    coachName={coach.full_name}
+                  />
                 ) : null}
               </li>
             ))}

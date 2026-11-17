@@ -1,9 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { FieldError, RequiredMark } from "@/components/field";
+import { TempPasswordDialog } from "@/components/temp-password-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +25,7 @@ import {
 } from "@/lib/auth/account-actions";
 import { useRouter } from "@/lib/i18n/navigation";
 
-const idleSquad: SquadActionState = { error: null, done: false };
+const idleSquad: SquadActionState = { error: null, done: false, field: null };
 const idleAccount: AccountActionState = {
   error: null,
   username: null,
@@ -42,18 +46,6 @@ const positions = [
 
 const hands = ["right", "left", "both"] as const;
 
-function FormError({ message }: { message: string | null }) {
-  if (!message) {
-    return null;
-  }
-
-  return (
-    <p role="alert" className="text-sm text-destructive">
-      {message}
-    </p>
-  );
-}
-
 export function AddPlayerForm({ squadId }: { squadId: string }) {
   const t = useTranslations("Squad");
   const locale = useLocale();
@@ -62,18 +54,38 @@ export function AddPlayerForm({ squadId }: { squadId: string }) {
     idleSquad,
   );
 
+  useEffect(() => {
+    if (state.done) {
+      toast.success(t("playerAdded"));
+    }
+  }, [state, t]);
+
+  const error = state.error ? t(state.error) : null;
+  const fieldError = (name: string) => (state.field === name ? error : null);
+
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-3 rounded-lg border p-4"
+      className="flex flex-col gap-3 rounded-lg border bg-card p-4"
     >
       <input type="hidden" name="squadId" value={squadId} />
       <h3 className="font-medium">{t("addPlayer")}</h3>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="fullName">{t("name")}</Label>
-          <Input id="fullName" name="fullName" required />
+          <Label htmlFor="fullName">
+            {t("name")} <RequiredMark label={t("required")} />
+          </Label>
+          <Input
+            id="fullName"
+            name="fullName"
+            required
+            aria-invalid={state.field === "fullName" || undefined}
+            aria-describedby={
+              state.field === "fullName" ? "fullName-error" : undefined
+            }
+          />
+          <FieldError id="fullName-error" message={fieldError("fullName")} />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -84,6 +96,14 @@ export function AddPlayerForm({ squadId }: { squadId: string }) {
             type="number"
             min={0}
             max={99}
+            aria-invalid={state.field === "jerseyNumber" || undefined}
+            aria-describedby={
+              state.field === "jerseyNumber" ? "jersey-error" : undefined
+            }
+          />
+          <FieldError
+            id="jersey-error"
+            message={fieldError("jerseyNumber")}
           />
         </div>
 
@@ -121,16 +141,40 @@ export function AddPlayerForm({ squadId }: { squadId: string }) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="dateOfBirth">{t("dateOfBirth")}</Label>
-          <Input id="dateOfBirth" name="dateOfBirth" type="date" />
+          <Input
+            id="dateOfBirth"
+            name="dateOfBirth"
+            type="date"
+            aria-invalid={state.field === "dateOfBirth" || undefined}
+            aria-describedby={
+              state.field === "dateOfBirth" ? "dob-error" : undefined
+            }
+          />
+          <FieldError id="dob-error" message={fieldError("dateOfBirth")} />
         </div>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="heightCm">{t("height")}</Label>
-          <Input id="heightCm" name="heightCm" type="number" min={100} max={230} />
+          <Input
+            id="heightCm"
+            name="heightCm"
+            type="number"
+            min={100}
+            max={230}
+            aria-invalid={state.field === "heightCm" || undefined}
+            aria-describedby={
+              state.field === "heightCm" ? "height-error" : undefined
+            }
+          />
+          <FieldError id="height-error" message={fieldError("heightCm")} />
         </div>
       </div>
 
-      <FormError message={state.error ? t(state.error) : null} />
+      {error && !state.field ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       <Button type="submit" disabled={pending} className="self-start">
         {pending ? t("adding") : t("add")}
@@ -141,9 +185,11 @@ export function AddPlayerForm({ squadId }: { squadId: string }) {
 
 export function MovePlayerForm({
   playerId,
+  playerName,
   squads,
 }: {
   playerId: string;
+  playerName: string;
   squads: { id: string; name: string }[];
 }) {
   const t = useTranslations("Squad");
@@ -152,38 +198,80 @@ export function MovePlayerForm({
     movePlayer.bind(null, locale),
     idleSquad,
   );
+  const [target, setTarget] = useState(squads[0]?.id ?? "");
+  const [confirming, setConfirming] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.done) {
+      toast.success(t("playerMoved"));
+    }
+  }, [state, t]);
+
+  const targetName = squads.find((squad) => squad.id === target)?.name ?? "";
 
   return (
-    <form action={formAction} className="flex items-end gap-2">
-      <input type="hidden" name="playerId" value={playerId} />
-      <Label htmlFor={`move-${playerId}`} className="sr-only">
-        {t("move")}
-      </Label>
-      <select
-        id={`move-${playerId}`}
-        name="squadId"
-        className={selectClassName}
-        defaultValue={squads[0]?.id}
-      >
-        {squads.map((squad) => (
-          <option key={squad.id} value={squad.id}>
-            {squad.name}
-          </option>
-        ))}
-      </select>
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending ? t("moving") : t("moveSubmit")}
-      </Button>
-      <FormError message={state.error ? t(state.error) : null} />
-    </form>
+    <>
+      <form ref={formRef} action={formAction} className="flex items-end gap-2">
+        <input type="hidden" name="playerId" value={playerId} />
+        <Label htmlFor={`move-${playerId}`} className="sr-only">
+          {t("move")}
+        </Label>
+        <select
+          id={`move-${playerId}`}
+          name="squadId"
+          className={selectClassName}
+          value={target}
+          onChange={(event) => setTarget(event.target.value)}
+        >
+          {squads.map((squad) => (
+            <option key={squad.id} value={squad.id}>
+              {squad.name}
+            </option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => setConfirming(true)}
+        >
+          {pending ? t("moving") : t("moveSubmit")}
+        </Button>
+        {state.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {t(state.error)}
+          </p>
+        ) : null}
+      </form>
+
+      <ConfirmDialog
+        open={confirming}
+        title={t("moveConfirmTitle")}
+        description={t("moveConfirm", {
+          player: playerName,
+          squad: targetName,
+        })}
+        confirmLabel={t("moveSubmit")}
+        cancelLabel={t("cancel")}
+        onConfirm={() => {
+          setConfirming(false);
+          formRef.current?.requestSubmit();
+        }}
+        onClose={() => setConfirming(false)}
+      />
+    </>
   );
 }
 
 export function AccountControl({
   playerId,
+  playerName,
   hasAccount,
 }: {
   playerId: string;
+  playerName: string;
   hasAccount: boolean;
 }) {
   const t = useTranslations("Squad");
@@ -192,40 +280,102 @@ export function AccountControl({
     hasAccount ? resetPasswordAction : createPlayerAccountAction,
     idleAccount,
   );
+  const [confirming, setConfirming] = useState(false);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const password = state.temporaryPassword;
 
   useEffect(() => {
-    if (state.temporaryPassword) {
+    if (password) {
       router.refresh();
     }
-  }, [state.temporaryPassword, router]);
+  }, [password, router]);
+
+  const error = state.error ? t(state.error) : null;
 
   return (
-    <form action={formAction} className="flex flex-wrap items-end gap-2">
-      <input type="hidden" name="playerId" value={playerId} />
+    <>
+      <form
+        ref={formRef}
+        action={formAction}
+        className="flex flex-wrap items-end gap-2"
+      >
+        <input type="hidden" name="playerId" value={playerId} />
 
-      {hasAccount ? null : (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`username-${playerId}`}>{t("username")}</Label>
-          <Input id={`username-${playerId}`} name="username" required />
-        </div>
-      )}
+        {hasAccount ? null : (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor={`username-${playerId}`}>
+              {t("username")} <RequiredMark label={t("required")} />
+            </Label>
+            <Input
+              id={`username-${playerId}`}
+              name="username"
+              required
+              aria-invalid={error ? true : undefined}
+              aria-describedby={
+                error ? `username-error-${playerId}` : undefined
+              }
+            />
+            <FieldError
+              id={`username-error-${playerId}`}
+              message={error}
+            />
+          </div>
+        )}
 
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {pending
-          ? t(hasAccount ? "resetting" : "creatingAccount")
-          : t(hasAccount ? "resetPassword" : "createAccount")}
-      </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => {
+            if (hasAccount) {
+              setConfirming(true);
+            } else {
+              formRef.current?.requestSubmit();
+            }
+          }}
+        >
+          {pending
+            ? t(hasAccount ? "resetting" : "creatingAccount")
+            : t(hasAccount ? "resetPassword" : "createAccount")}
+        </Button>
 
-      <FormError message={state.error ? t(state.error) : null} />
+        {hasAccount ? <FieldError id={`account-error-${playerId}`} message={error} /> : null}
+      </form>
 
-      {state.temporaryPassword ? (
-        <p role="status" className="text-sm">
-          {t("temporaryPassword", { password: state.temporaryPassword })}
-          {" — "}
-          {t("temporaryPasswordNote")}
-        </p>
+      <ConfirmDialog
+        open={confirming}
+        title={t("resetConfirmTitle")}
+        description={t("resetConfirm", { player: playerName })}
+        confirmLabel={t("resetPassword")}
+        cancelLabel={t("cancel")}
+        tone="destructive"
+        onConfirm={() => {
+          setConfirming(false);
+          formRef.current?.requestSubmit();
+        }}
+        onClose={() => setConfirming(false)}
+      />
+
+      {password ? (
+        <TempPasswordDialog
+          open={dismissed !== password}
+          title={
+            hasAccount ? t("passwordResetTitle") : t("accountCreatedTitle")
+          }
+          usernameLabel={t("username")}
+          username={state.username}
+          password={password}
+          note={t("temporaryPasswordNote")}
+          copyLabel={t("copyPassword")}
+          copiedLabel={t("passwordCopied")}
+          closeLabel={t("close")}
+          onClose={() => setDismissed(password)}
+        />
       ) : null}
-    </form>
+    </>
   );
 }
 
@@ -242,6 +392,12 @@ export function AssignCoachForm({
     assignCoach.bind(null, locale),
     idleSquad,
   );
+
+  useEffect(() => {
+    if (state.done) {
+      toast.success(t("coachAssigned"));
+    }
+  }, [state, t]);
 
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2">
@@ -264,10 +420,14 @@ export function AssignCoachForm({
       </div>
 
       <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        {t("assign")}
+        {pending ? t("assigning") : t("assign")}
       </Button>
 
-      <FormError message={state.error ? t(state.error) : null} />
+      {state.error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {t(state.error)}
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -275,9 +435,11 @@ export function AssignCoachForm({
 export function RemoveCoachForm({
   squadId,
   coachId,
+  coachName,
 }: {
   squadId: string;
   coachId: string;
+  coachName: string;
 }) {
   const t = useTranslations("Squad");
   const locale = useLocale();
@@ -285,15 +447,49 @@ export function RemoveCoachForm({
     unassignCoach.bind(null, locale),
     idleSquad,
   );
+  const [confirming, setConfirming] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.done) {
+      toast.success(t("coachRemoved"));
+    }
+  }, [state, t]);
 
   return (
-    <form action={formAction} className="flex items-center gap-2">
-      <input type="hidden" name="squadId" value={squadId} />
-      <input type="hidden" name="coachId" value={coachId} />
-      <Button type="submit" variant="ghost" size="sm" disabled={pending}>
-        {t("remove")}
-      </Button>
-      <FormError message={state.error ? t(state.error) : null} />
-    </form>
+    <>
+      <form ref={formRef} action={formAction} className="flex items-center gap-2">
+        <input type="hidden" name="squadId" value={squadId} />
+        <input type="hidden" name="coachId" value={coachId} />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={pending}
+          onClick={() => setConfirming(true)}
+        >
+          {t("remove")}
+        </Button>
+        {state.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {t(state.error)}
+          </p>
+        ) : null}
+      </form>
+
+      <ConfirmDialog
+        open={confirming}
+        title={t("removeCoachConfirmTitle")}
+        description={t("removeCoachConfirm", { coach: coachName })}
+        confirmLabel={t("remove")}
+        cancelLabel={t("cancel")}
+        tone="destructive"
+        onConfirm={() => {
+          setConfirming(false);
+          formRef.current?.requestSubmit();
+        }}
+        onClose={() => setConfirming(false)}
+      />
+    </>
   );
 }

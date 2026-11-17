@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
+import { FieldError, RequiredMark } from "@/components/field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,33 +34,72 @@ export function AcademyForm({ defaults }: Props) {
     initialState,
   );
 
+  useEffect(() => {
+    if (state.saved) {
+      toast.success(t("saved"));
+    }
+  }, [state, t]);
+
+  const error = state.error ? t(state.error) : null;
+  const fieldError = (name: string) => (state.field === name ? error : null);
+
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="name">{t("name")}</Label>
-        <Input id="name" name="name" defaultValue={defaults.name} required />
+        <Label htmlFor="name">
+          {t("name")} <RequiredMark label={t("required")} />
+        </Label>
+        <Input
+          id="name"
+          name="name"
+          defaultValue={defaults.name}
+          required
+          aria-invalid={state.field === "name" || undefined}
+          aria-describedby={state.field === "name" ? "name-error" : undefined}
+        />
+        <FieldError id="name-error" message={fieldError("name")} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="seasonStart">{t("seasonStart")}</Label>
+          <Label htmlFor="seasonStart">
+            {t("seasonStart")} <RequiredMark label={t("required")} />
+          </Label>
           <Input
             id="seasonStart"
             name="seasonStart"
             type="date"
             defaultValue={defaults.seasonStart}
             required
+            aria-invalid={state.field === "seasonStart" || undefined}
+            aria-describedby={
+              state.field === "seasonStart" ? "season-start-error" : undefined
+            }
+          />
+          <FieldError
+            id="season-start-error"
+            message={fieldError("seasonStart")}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="seasonEnd">{t("seasonEnd")}</Label>
+          <Label htmlFor="seasonEnd">
+            {t("seasonEnd")} <RequiredMark label={t("required")} />
+          </Label>
           <Input
             id="seasonEnd"
             name="seasonEnd"
             type="date"
             defaultValue={defaults.seasonEnd}
             required
+            aria-invalid={state.field === "seasonEnd" || undefined}
+            aria-describedby={
+              state.field === "seasonEnd" ? "season-end-error" : undefined
+            }
+          />
+          <FieldError
+            id="season-end-error"
+            message={fieldError("seasonEnd")}
           />
         </div>
       </div>
@@ -92,15 +133,9 @@ export function AcademyForm({ defaults }: Props) {
         </div>
       </div>
 
-      {state.error ? (
+      {error && !state.field ? (
         <p role="alert" className="text-sm text-destructive">
-          {t(state.error)}
-        </p>
-      ) : null}
-
-      {state.saved && !state.error ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          {t("saved")}
+          {error}
         </p>
       ) : null}
 

@@ -5,6 +5,7 @@ import { AppNav, type NavItem } from "@/components/app-nav";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/toaster";
 import { signOut } from "@/lib/auth/actions";
 import { Link } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -86,6 +87,7 @@ export default async function AppLayout({ children, params }: Props) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         {children}
       </main>
+      <Toaster />
     </div>
   );
 }

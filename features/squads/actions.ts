@@ -14,11 +14,13 @@ import {
 export type SquadState = {
   error: "forbidden" | "invalidInput" | "failed" | null;
   created: boolean;
+  field?: string | null;
 };
 
 export type SquadActionState = {
   error: "forbidden" | "invalidInput" | "failed" | "sameSquad" | null;
   done: boolean;
+  field?: string | null;
 };
 
 const FAILED: SquadActionState = { error: "failed", done: false };
@@ -49,7 +51,11 @@ export async function createSquad(
   });
 
   if (!parsed.success) {
-    return { error: "invalidInput", created: false };
+    return {
+      error: "invalidInput",
+      created: false,
+      field: parsed.error.issues[0]?.path.join(".") ?? null,
+    };
   }
 
   const supabase = await createClient();
@@ -96,7 +102,11 @@ export async function addPlayer(
   });
 
   if (!parsed.success) {
-    return { error: "invalidInput", done: false };
+    return {
+      error: "invalidInput",
+      done: false,
+      field: parsed.error.issues[0]?.path.join(".") ?? null,
+    };
   }
 
   const { squadId, ...player } = parsed.data;
@@ -157,7 +167,11 @@ export async function assignCoach(
   });
 
   if (!parsed.success) {
-    return { error: "invalidInput", done: false };
+    return {
+      error: "invalidInput",
+      done: false,
+      field: parsed.error.issues[0]?.path.join(".") ?? null,
+    };
   }
 
   const supabase = await createClient();
@@ -195,7 +209,11 @@ export async function unassignCoach(
   });
 
   if (!parsed.success) {
-    return { error: "invalidInput", done: false };
+    return {
+      error: "invalidInput",
+      done: false,
+      field: parsed.error.issues[0]?.path.join(".") ?? null,
+    };
   }
 
   const supabase = await createClient();
@@ -234,7 +252,11 @@ export async function movePlayer(
   });
 
   if (!parsed.success) {
-    return { error: "invalidInput", done: false };
+    return {
+      error: "invalidInput",
+      done: false,
+      field: parsed.error.issues[0]?.path.join(".") ?? null,
+    };
   }
 
   const supabase = await createClient();
