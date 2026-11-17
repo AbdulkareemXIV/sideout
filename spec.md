@@ -438,6 +438,44 @@ A player with fewer than 10 attempts in a category shows the metric greyed out, 
 | Performance | Main pages load in under 2 seconds on a typical 4G connection. Profiles and dashboards use precomputed or cached aggregates when data grows. |
 | Auditability | Match events and ratings keep who made them and when. |
 
+## Interface and user experience
+
+Sideout should feel like a finished product, not a prototype. Simplicity applies to code and scope, never to how the site feels to use. These rules apply to every screen, including screens the modules do not describe in detail.
+
+### Visual identity
+
+- Colors: deep navy `#0d1726`, sand `#f2ede3` as the light background, and court orange `#f28a2e` as the accent for primary actions, plus neutral grays for borders and secondary text. Text and controls meet WCAG AA contrast.
+- Fonts: Oswald for headings and scores, Public Sans for body text, and IBM Plex Sans Arabic for all Arabic text.
+- Light theme only. Spacing, corners and shadows come from the shared shadcn/ui theme tokens, never one-off styles.
+- A simple Sideout wordmark appears in the header and on the sign-in page.
+
+### Layout and navigation
+
+- Signed-in users get one app shell: a header with the academy name, the user's name and role, the language switch and sign-out, and a navigation menu listing only the sections their role can reach, with the current section highlighted. On phones the menu collapses behind a menu button.
+- Every page has a clear title. Pages below the top level show breadcrumbs (for example Squads › U16 › Sara) and a back link to the parent page.
+- After sign-in, each role lands on a sensible home page: the director on the academy overview (the squads list until the dashboard exists), a coach on their squads, a player on their own profile.
+- Unknown or refused addresses show a friendly page with a link home, never a raw error.
+
+### Feedback and states
+
+- Every form field has a label; required fields are marked; validation messages appear next to the field in the user's language; the submit button is disabled and shows progress while saving.
+- Successes and failures show a short toast, for example "Player added".
+- Destructive or irreversible actions (deleting, moving a player, resetting a password) ask for confirmation in a dialog that says exactly what will happen.
+- Empty lists explain what belongs there and offer the next action, for example "No players yet. Add the first player."
+- Pages show loading skeletons instead of blank screens.
+- Temporary passwords appear in a dialog with a copy button and a note that they will not be shown again.
+
+### Lists and data
+
+- Lists longer than one screen have search, plus filters where useful (for example by position). Tables become stacked cards on phones.
+- Names link to their detail pages.
+- Dates, times and numbers are formatted for the active language.
+
+### Accessibility
+
+- Everything works with a keyboard, focus is always visible, and dialogs trap focus and close with Escape.
+- Touch targets are at least 44 px.
+
 ## Build order
 
 Sideout is built in order of importance, so the most valuable parts exist first. This is a guide for priorities, not a schedule.
@@ -522,7 +560,7 @@ This section is written for the AI model assisting with development. This docume
 4. Keep every change small enough to review, and explain what changed and why. Use one branch per module and merge it when the module works.
 5. Never invent volleyball rules. If a rule is not covered in the Volleyball domain rules section, ask.
 6. When a decision changes this specification, say so explicitly so the document can be updated.
-7. Prefer the simplest solution that meets the requirement. Do not add libraries, abstractions or configuration this document does not call for.
+7. Prefer the simplest solution that meets the requirement. Do not add libraries, abstractions or configuration this document does not call for. Simplicity applies to code, dependencies and scope, never to usability: every screen meets the Interface and user experience section, even where a module does not spell it out.
 
 ### Project structure
 
@@ -553,5 +591,5 @@ This section is written for the AI model assisting with development. This docume
 - Requirements in this document are met.
 - Unit tests cover the logic; database tests cover any new access rules.
 - Type checking, linting and all tests pass in CI.
-- The feature works on a phone-sized screen, in both English and Arabic.
+- The feature works on a phone-sized screen, in both English and Arabic, and meets the Interface and user experience section.
 - The seed data exercises the feature so it can be demonstrated.
