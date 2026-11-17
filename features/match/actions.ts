@@ -5,8 +5,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
-
-import { undoableEvent, type MatchEvent, type MatchEventInput } from "./engine";
+import {
+  matchState,
+  undoableEvent,
+  type MatchEvent,
+  type MatchEventInput,
+} from "./engine";
 
 export type MatchActionResult = { error: "forbidden" | "invalidInput" | "failed" | null };
 
@@ -138,4 +142,60 @@ export async function undoLastEvent(matchId: string): Promise<MatchActionResult>
   if (!target) return { error: "invalidInput" };
 
   return append(matchId, { type: "undo", target: target.id });
+}
+
+/** Closes a finished match and writes each player's totals once. */
+export async function finishMatch(matchId: string): Promise<MatchActionResult> {
+  const supabase = await createClient();
+
+  const { data: match } = await supabase
+    .from("matches")
+    .select("best_of, set_points, first_serve")
+    .eq("id", matchId)
+    .maybeSingle();
+
+  if (!match) return { error: "invalidInput" };
+
+  const { data: rows } = await supabase
+    .from("match_events")
+    .select("id, payload")
+    .eq("match_id", matchId)
+    .order("seq");
+
+  const events: MatchEvent[] = (rows ?? []).map((row) => ({
+    id: row.id,
+    event: row.payload as MatchEventInput,
+  }));
+
+  const state = matchState(events, {
+    bestOf: match.best_of as 3 | 5,
+    setPoints: match.set_points,
+    firstServe: match.first_serve as "us" | "them",
+  });
+
+  const { error } = await supabase
+    .from("matches")
+    .update({ status: "finished", ended_at: new Date().toISOString() })
+    .eq("id", matchId);
+
+  if (error) return { error: error.code === "42501" ? "forbidden" : "failed" };
+
+  const totals = Object.entries(state.totals).map(([playerId, counts]) => ({
+    match_id: matchId,
+    player_id: playerId,
+    totals: counts,
+  }));
+
+  if (totals.length > 0) {
+    const { error: totalsError } = await supabase
+      .from("match_player_totals")
+      .upsert(totals, { onConflict: "match_id,player_id" });
+
+    if (totalsError) return { error: "failed" };
+  }
+
+  revalidatePath(`/en/matches/${matchId}`);
+  revalidatePath(`/ar/matches/${matchId}`);
+
+  return { error: null };
 }

@@ -29,7 +29,7 @@ export default async function MatchPage({
 
   const { data: lineups } = await supabase
     .from("lineups")
-    .select("id, name, system, positions, squads (name)")
+    .select("id, squad_id, name, system, positions, squads (name)")
     .in(
       "id",
       [match.lineup_id, match.opponent_lineup_id].filter(
@@ -72,8 +72,34 @@ export default async function MatchPage({
     .from("players")
     .select("id, full_name, jersey_number")
     .in("id", playerIds);
-
   const byId = new Map((players ?? []).map((player) => [player.id, player]));
+
+  const { data: members } = await supabase
+    .from("squad_memberships")
+    .select("players (id, full_name, jersey_number)")
+    .eq("squad_id", ours.squad_id)
+    .is("end_date", null);
+
+  const squadPlayers = (members ?? [])
+    .map((member) => member.players)
+    .filter((player): player is NonNullable<typeof player> => Boolean(player));
+
+  const label = (playerId: string) => {
+    const player =
+      squadPlayers.find((row) => row.id === playerId) ?? byId.get(playerId);
+    return player
+      ? `${player.jersey_number ?? ""} ${player.full_name}`.trim()
+      : t("unknownPlayer");
+  };
+
+  const bench = squadPlayers
+    .filter((player) => !playerIds.includes(player.id))
+    .map((player) => ({ id: player.id, label: label(player.id) }));
+
+  const totals = Object.entries(state.totals).map(([playerId, counts]) => ({
+    label: label(playerId),
+    stats: Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)),
+  }));
 
   const onCourt: OnCourtPlayer[] = (Object.keys(current) as unknown as Position[])
     .sort((a, b) => Number(a) - Number(b))
@@ -103,10 +129,13 @@ export default async function MatchPage({
         onCourt={onCourt}
         serving={state.serving}
         score={state.score}
+        finished={state.finished}
         sets={state.sets}
         setsWon={state.setsWon}
         rotation={state.rotation.us}
-        finished={state.finished}
+        bench={bench}
+        totals={totals}
+        status={match.status}
         canUndo={canUndo(events)}
         opponentName={opponentName}
       />

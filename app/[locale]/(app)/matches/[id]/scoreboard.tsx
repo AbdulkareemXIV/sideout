@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { logMatchEvent, undoLastEvent } from "@/features/match/actions";
+import { finishMatch, logMatchEvent, undoLastEvent } from "@/features/match/actions";
 import type { StatAction, StatResult } from "@/features/match/engine";
 
 export type OnCourtPlayer = {
@@ -22,10 +22,16 @@ export function Scoreboard({
   sets,
   setsWon,
   rotation,
-  finished,
+  bench,
+  totals,
+  status,
   canUndo,
   opponentName,
+  finished,
 }: {
+  bench: { id: string; label: string }[];
+  totals: { label: string; stats: [string, number][] }[];
+  status: string;
   matchId: string;
   onCourt: OnCourtPlayer[];
   serving: "us" | "them";
@@ -41,6 +47,7 @@ export function Scoreboard({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [selected, setSelected] = useState<string | null>(null);
+  const [benchPlayer, setBenchPlayer] = useState(bench[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
 
   function run(action: () => Promise<{ error: string | null }>) {
@@ -97,9 +104,34 @@ export function Scoreboard({
       </div>
 
       {finished ? (
-        <p className="text-center text-lg font-semibold">
-          {setsWon.us > setsWon.them ? t("won") : t("lost")}
-        </p>
+        <div className="flex flex-col gap-4">
+          <p className="text-center text-lg font-semibold">
+            {setsWon.us > setsWon.them ? t("won") : t("lost")}
+          </p>
+
+          {totals.length > 0 ? (
+            <ul className="flex flex-col gap-1 rounded-xl border bg-card p-4 text-sm">
+              {totals.map((player) => (
+                <li key={player.label} className="flex justify-between gap-4">
+                  <span>{player.label}</span>
+                  <span className="text-muted-foreground">
+                    {player.stats.map(([key, count]) => `${key} ${count}`).join(" · ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {status !== "finished" ? (
+            <Button
+              type="button"
+              disabled={pending}
+              onClick={() => run(() => finishMatch(matchId))}
+            >
+              {t("finishMatch")}
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -149,6 +181,30 @@ export function Scoreboard({
             </Button>
             <Button
               type="button"
+              variant="outline"
+              disabled={pending || !selected}
+              onClick={() => log("dig", "rated")}
+            >
+              {t("dig")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending || !selected}
+              onClick={() => log("reception", "rated")}
+            >
+              {t("reception")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending || !selected}
+              onClick={() => log("set", "assist")}
+            >
+              {t("setAssist")}
+            </Button>
+            <Button
+              type="button"
               variant="secondary"
               disabled={pending}
               onClick={() => run(() => logMatchEvent(matchId, { type: "opponent_point" }))}
@@ -163,6 +219,48 @@ export function Scoreboard({
             >
               {t("undo")}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={() => run(() => logMatchEvent(matchId, { type: "timeout", team: "us" }))}
+            >
+              {t("timeout")}
+            </Button>
+
+          {bench.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label={t("substitute")}
+                className="h-9 rounded-lg border bg-background px-2 text-sm"
+                value={benchPlayer}
+                onChange={(event) => setBenchPlayer(event.target.value)}
+              >
+                {bench.map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.label}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected || !benchPlayer}
+                onClick={() =>
+                  run(() =>
+                    logMatchEvent(matchId, {
+                      type: "substitution",
+                      team: "us",
+                      outId: selected ?? "",
+                      inId: benchPlayer,
+                    }),
+                  )
+                }
+              >
+                {t("substitute")}
+              </Button>
+            </div>
+          ) : null}
           </div>
         </>
       )}
