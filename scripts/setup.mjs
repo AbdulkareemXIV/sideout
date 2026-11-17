@@ -26,8 +26,36 @@ function localStatus() {
   return values;
 }
 
+/** Supabase sometimes needs a second attempt on a cold or busy Docker daemon. */
+function startSupabase() {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      run("npx supabase start");
+      return;
+    } catch (error) {
+      if (attempt === 3) throw error;
+      console.error(`\nSupabase did not start (attempt ${attempt}). Retrying.`);
+    }
+  }
+}
+
+async function waitForApi(url) {
+  const deadline = Date.now() + 60_000;
+
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(`${url}/auth/v1/health`);
+      if (response.ok) return;
+    } catch {}
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  throw new Error(`The local API at ${url} did not answer within a minute.`);
+}
+
 try {
-  run("npx supabase start");
+  startSupabase();
 } catch {
   console.error(
     "\nLocal Supabase did not start. Is Docker Desktop running? If the ports are\n" +
@@ -35,6 +63,8 @@ try {
   );
   process.exit(1);
 }
+
+await waitForApi(localStatus().API_URL);
 
 run("npx supabase db reset");
 
