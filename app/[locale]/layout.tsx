@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Noto_Sans_Arabic } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Oswald, Public_Sans } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -11,10 +11,19 @@ import { cn } from "@/lib/utils";
 
 import "../globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
-const notoSansArabic = Noto_Sans_Arabic({
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-display",
+});
+const publicSans = Public_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+});
+const plexArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
-  variable: "--font-sans",
+  weight: ["400", "500", "600"],
+  variable: "--font-arabic",
 });
 
 type Props = {
@@ -47,8 +56,9 @@ export default async function LocaleLayout({ children, params }: Props) {
       lang={locale}
       dir={getDirection(locale)}
       className={cn(
-        geist.variable,
-        locale === "ar" ? notoSansArabic.variable : undefined,
+        oswald.variable,
+        publicSans.variable,
+        plexArabic.variable,
       )}
     >
       <body>
