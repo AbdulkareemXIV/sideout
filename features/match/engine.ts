@@ -4,10 +4,14 @@
 export const TEAMS = ["us", "them"] as const;
 export type Team = (typeof TEAMS)[number];
 
+export type Exchange = { out: string; in: string };
+
 export type MatchConfig = {
   bestOf: 3 | 5;
   setPoints: number;
   firstServe: Team;
+  /** The starting six per team, in position order, when substitutions matter. */
+  lineups?: Partial<Record<Team, readonly string[]>>;
 };
 
 export const DECIDING_SET_POINTS = 15;
@@ -25,14 +29,18 @@ export type StatAction =
 
 export type StatResult =
   | "ace"
+  | "kill"
   | "in"
   | "error"
-  | "kill"
+  | "rated"
+  | "rated0"
+  | "rated1"
+  | "rated2"
+  | "rated3"
   | "inPlay"
   | "blocked"
   | "solo"
-  | "assist"
-  | "rated";
+  | "assist";
 
 export type MatchEventInput =
   | {
@@ -60,6 +68,10 @@ export type MatchState = {
   rotation: Record<Team, number>;
   timeouts: Record<Team, number>;
   substitutions: Record<Team, number>;
+  /** The six on court now, in position order, once a lineup is known. */
+  court: Record<Team, string[]>;
+  /** Who replaced whom this set, in order. */
+  exchanges: Record<Team, Exchange[]>;
   /** Player id to "<action>.<result>" counts. */
   totals: Record<string, Record<string, number>>;
   finished: boolean;
@@ -91,6 +103,11 @@ export function targetPoints(setIndex: number, config: MatchConfig): number {
 }
 
 export function initial(config: MatchConfig): MatchState {
+  const court = {
+    us: [...(config.lineups?.us ?? [])],
+    them: [...(config.lineups?.them ?? [])],
+  };
+
   return {
     sets: [],
     score: { us: 0, them: 0 },
@@ -99,10 +116,13 @@ export function initial(config: MatchConfig): MatchState {
     rotation: { us: 0, them: 0 },
     timeouts: { us: 0, them: 0 },
     substitutions: { us: 0, them: 0 },
+    court,
+    exchanges: { us: [], them: [] },
     totals: {},
     finished: false,
   };
 }
+
 
 
 
@@ -153,6 +173,11 @@ function award(state: MatchState, winner: Team, config: MatchConfig): MatchState
     rotation: { us: 0, them: 0 },
     timeouts: { us: 0, them: 0 },
     substitutions: { us: 0, them: 0 },
+    court: {
+      us: [...(config.lineups?.us ?? state.court.us)],
+      them: [...(config.lineups?.them ?? state.court.them)],
+    },
+    exchanges: { us: [], them: [] },
     finished,
   };
 }
@@ -162,6 +187,11 @@ function apply(state: MatchState, event: MatchEventInput, config: MatchConfig): 
 
   switch (event.type) {
     case "stat": {
+      const court = state.court[event.team];
+      // Serving out of order is blocked: only the player in position 1 serves.
+      if (event.action === "serve" && court.length === 6 && court[0] !== event.playerId)
+        return state;
+
       const withStat = recordStat(state, event);
       const winner = pointFor(event.action, event.result, event.team);
       return winner ? award(withStat, winner, config) : withStat;
@@ -180,17 +210,84 @@ function apply(state: MatchState, event: MatchEventInput, config: MatchConfig): 
     }
     case "substitution": {
       if (state.substitutions[event.team] >= SUBSTITUTIONS_PER_SET) return state;
-      return {
+
+      const starters = config.lineups?.[event.team];
+      const counted = {
         ...state,
         substitutions: {
           ...state.substitutions,
           [event.team]: state.substitutions[event.team] + 1,
         },
       };
+
+      // Without a starting six there is nobody to check the exchange against.
+      if (!starters || starters.length === 0) return counted;
+      if (substitutionProblem(state, event.team, event.outId, event.inId, starters))
+        return state;
+
+      return {
+        ...counted,
+        court: {
+          ...state.court,
+          [event.team]: state.court[event.team].map((id) =>
+            id === event.outId ? event.inId : id,
+          ),
+        },
+        exchanges: {
+          ...state.exchanges,
+          [event.team]: [
+            ...state.exchanges[event.team],
+            { out: event.outId, in: event.inId },
+          ],
+        },
+      };
     }
+
     case "undo":
       return state;
   }
+}
+
+export type SubstitutionProblem =
+  | "limit"
+  | "notOnCourt"
+  | "alreadyOnCourt"
+  | "alreadyEntered"
+  | "returnNotAllowed"
+  | "wrongReplacement";
+
+/**
+ * Volleyball substitution rules: a starter leaves once and may only return for
+ * the player who replaced them; a substitute enters once per set and may only
+ * be replaced by the starter they replaced.
+ */
+export function substitutionProblem(
+  state: SubstitutionState,
+  team: Team,
+  outId: string,
+  inId: string,
+  starters: readonly string[],
+): SubstitutionProblem | null {
+  if (state.substitutions[team] >= SUBSTITUTIONS_PER_SET) return "limit";
+
+  const court = state.court[team];
+  if (!court.includes(outId)) return "notOnCourt";
+  if (court.includes(inId)) return "alreadyOnCourt";
+
+  const exchanges = state.exchanges[team];
+  const isStarter = (id: string) => starters.includes(id);
+
+  if (isStarter(inId)) {
+    const cameOff = exchanges.find((exchange) => exchange.out === inId);
+    if (!cameOff) return "returnNotAllowed";
+    if (cameOff.in !== outId) return "wrongReplacement";
+    return null;
+  }
+
+  if (exchanges.some((exchange) => exchange.in === inId)) return "alreadyEntered";
+  if (!isStarter(outId)) return "wrongReplacement";
+
+  return null;
 }
 
 /**
@@ -234,3 +331,9 @@ export function undoableEvent(events: readonly MatchEvent[]): MatchEvent | null 
 
   return null;
 }
+
+export type SubstitutionState = {
+  substitutions: Record<Team, number>;
+  court: Record<Team, string[]>;
+  exchanges: Record<Team, Exchange[]>;
+};

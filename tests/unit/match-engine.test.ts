@@ -146,3 +146,85 @@ describe("limits", () => {
     expect(matchState(log(...substitutions), config).substitutions.us).toBe(6);
   });
 });
+
+describe("substitutions", () => {
+  const starters = ["p1", "p2", "p3", "p4", "p5", "p6"];
+  const withSix: MatchConfig = { ...config, lineups: { us: starters } };
+  const sub = (outId: string, inId: string): MatchEventInput => ({
+    type: "substitution",
+    team: "us",
+    outId,
+    inId,
+  });
+
+  it("puts the substitute on court in the slot they took", () => {
+    const state = matchState(log(sub("p2", "b1")), withSix);
+
+    expect(state.court.us).toEqual(["p1", "b1", "p3", "p4", "p5", "p6"]);
+    expect(state.substitutions.us).toBe(1);
+  });
+
+  it("lets the starter return, but only for the player who replaced them", () => {
+    const back = matchState(log(sub("p2", "b1"), sub("b1", "p2")), withSix);
+    expect(back.court.us).toContain("p2");
+    expect(back.court.us).not.toContain("b1");
+
+    const wrong = matchState(log(sub("p2", "b1"), sub("p3", "p2")), withSix);
+    expect(wrong.court.us).toContain("p3");
+    expect(wrong.court.us).not.toContain("p2");
+  });
+
+  it("refuses a starter who never left", () => {
+    const state = matchState(log(sub("p3", "p2")), withSix);
+
+    expect(state.court.us).toEqual(starters);
+    expect(state.substitutions.us).toBe(0);
+  });
+
+  it("refuses a substitute who has already entered", () => {
+    const state = matchState(
+      log(sub("p2", "b1"), sub("b1", "p2"), sub("p4", "b1")),
+      withSix,
+    );
+
+    expect(state.court.us).toContain("p4");
+    expect(state.substitutions.us).toBe(2);
+  });
+
+  it("refuses a substitute for another substitute", () => {
+    const state = matchState(log(sub("p2", "b1"), sub("b1", "b2")), withSix);
+
+    expect(state.court.us).toContain("b1");
+    expect(state.court.us).not.toContain("b2");
+  });
+
+  it("resets the exchanges at the start of a set", () => {
+    const set = Array.from({ length: 25 }, () => ourPoint);
+    const state = matchState(log(sub("p2", "b1"), ...set), withSix);
+
+    expect(state.court.us).toEqual(starters);
+    expect(state.substitutions.us).toBe(0);
+  });
+});
+
+describe("serving order", () => {
+  const withSix: MatchConfig = {
+    ...config,
+    lineups: { us: ["p1", "p2", "p3", "p4", "p5", "p6"] },
+  };
+
+  it("blocks a serve logged for anyone but the player in position 1", () => {
+    const wrongServer = matchState(
+      log({ type: "stat", team: "us", playerId: "p2", action: "serve", result: "ace" }),
+      withSix,
+    );
+    expect(wrongServer.score.us).toBe(0);
+    expect(wrongServer.totals).toEqual({});
+
+    const server = matchState(
+      log({ type: "stat", team: "us", playerId: "p1", action: "serve", result: "ace" }),
+      withSix,
+    );
+    expect(server.score.us).toBe(1);
+  });
+});

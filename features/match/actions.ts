@@ -150,11 +150,23 @@ export async function finishMatch(matchId: string): Promise<MatchActionResult> {
 
   const { data: match } = await supabase
     .from("matches")
-    .select("best_of, set_points, first_serve")
+    .select("best_of, set_points, first_serve, lineup_id")
     .eq("id", matchId)
     .maybeSingle();
 
   if (!match) return { error: "invalidInput" };
+
+  const { data: lineup } = match.lineup_id
+    ? await supabase
+        .from("lineups")
+        .select("positions")
+        .eq("id", match.lineup_id)
+        .maybeSingle()
+    : { data: null };
+
+  const starters = lineup
+    ? Object.values(lineup.positions as Record<string, string>)
+    : [];
 
   const { data: rows } = await supabase
     .from("match_events")
@@ -171,6 +183,7 @@ export async function finishMatch(matchId: string): Promise<MatchActionResult> {
     bestOf: match.best_of as 3 | 5,
     setPoints: match.set_points,
     firstServe: match.first_serve as "us" | "them",
+    lineups: { us: starters },
   });
 
   const { error } = await supabase

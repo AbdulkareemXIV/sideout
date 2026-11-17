@@ -5,13 +5,33 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { finishMatch, logMatchEvent, undoLastEvent } from "@/features/match/actions";
-import type { StatAction, StatResult } from "@/features/match/engine";
+import {
+  finishMatch,
+  logMatchEvent,
+  undoLastEvent,
+} from "@/features/match/actions";
+import {
+  substitutionProblem,
+  type Exchange,
+  type StatAction,
+  type StatResult,
+  type SubstitutionProblem,
+} from "@/features/match/engine";
+import { statLabel } from "@/features/match/stat-labels";
 
 export type OnCourtPlayer = {
   position: number;
   playerId: string;
   label: string;
+};
+
+const PROBLEM_MESSAGES: Record<SubstitutionProblem, string> = {
+  limit: "problemLimit",
+  notOnCourt: "problemNotOnCourt",
+  alreadyOnCourt: "problemAlreadyOnCourt",
+  alreadyEntered: "problemAlreadyEntered",
+  returnNotAllowed: "problemReturnNotAllowed",
+  wrongReplacement: "problemWrongReplacement",
 };
 
 export function Scoreboard({
@@ -23,13 +43,25 @@ export function Scoreboard({
   setsWon,
   rotation,
   bench,
+  starters,
+  court,
+  exchanges,
+  subsUsed,
+  libero,
+  finished,
   totals,
   status,
   canUndo,
   opponentName,
-  finished,
+  serverId,
+  serverLabel,
 }: {
   bench: { id: string; label: string }[];
+  starters: string[];
+  court: string[];
+  exchanges: Exchange[];
+  subsUsed: number;
+  libero: { id: string; label: string } | null;
   totals: { label: string; stats: [string, number][] }[];
   status: string;
   matchId: string;
@@ -42,6 +74,8 @@ export function Scoreboard({
   finished: boolean;
   canUndo: boolean;
   opponentName: string;
+  serverId: string | null;
+  serverLabel: string | null;
 }) {
   const t = useTranslations("Matches");
   const router = useRouter();
@@ -49,6 +83,11 @@ export function Scoreboard({
   const [selected, setSelected] = useState<string | null>(null);
   const [benchPlayer, setBenchPlayer] = useState(bench[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  const selectedPosition =
+    onCourt.find((player) => player.playerId === selected)?.position ?? null;
+  const frontRow =
+    selectedPosition !== null && selectedPosition >= 2 && selectedPosition <= 4;
 
   function run(action: () => Promise<{ error: string | null }>) {
     setError(null);
@@ -72,6 +111,36 @@ export function Scoreboard({
     );
   }
 
+  function substitute() {
+    if (!selected || !benchPlayer) return;
+
+    const problem = substitutionProblem(
+      {
+        substitutions: { us: subsUsed, them: 0 },
+        court: { us: court, them: [] },
+        exchanges: { us: exchanges, them: [] },
+      },
+      "us",
+      selected,
+      benchPlayer,
+      starters,
+    );
+
+    if (problem) {
+      setError(t(PROBLEM_MESSAGES[problem]));
+      return;
+    }
+
+    run(() =>
+      logMatchEvent(matchId, {
+        type: "substitution",
+        team: "us",
+        outId: selected,
+        inId: benchPlayer,
+      }),
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-xl border bg-card p-4">
@@ -81,6 +150,7 @@ export function Scoreboard({
           </span>
           <span className="text-sm font-medium">
             {serving === "us" ? t("weServe") : t("theyServe")}
+            {serving === "us" && serverLabel ? ` · ${t("server")}: ${serverLabel}` : ""}
           </span>
         </div>
 
@@ -115,7 +185,9 @@ export function Scoreboard({
                 <li key={player.label} className="flex justify-between gap-4">
                   <span>{player.label}</span>
                   <span className="text-muted-foreground">
-                    {player.stats.map(([key, count]) => `${key} ${count}`).join(" · ")}
+                    {player.stats
+                      .map(([key, count]) => `${statLabel(key, t)} ${count}`)
+                      .join(" · ")}
                   </span>
                 </li>
               ))}
@@ -146,63 +218,164 @@ export function Scoreboard({
                 {player.label}
               </Button>
             ))}
+            {libero ? (
+              <Button
+                type="button"
+                variant={selected === libero.id ? "default" : "outline"}
+                className="justify-start"
+                onClick={() => setSelected(libero.id)}
+              >
+                {libero.label} · {t("libero")}
+              </Button>
+            ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              disabled={pending || !selected}
-              onClick={() => log("attack", "kill")}
-            >
-              {t("kill")}
-            </Button>
-            <Button
-              type="button"
-              disabled={pending || !selected}
-              onClick={() => log("serve", "ace")}
-            >
-              {t("ace")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending || !selected}
-              onClick={() => log("serve", "error")}
-            >
-              {t("serveError")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending || !selected}
-              onClick={() => log("attack", "error")}
-            >
-              {t("attackError")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending || !selected}
-              onClick={() => log("dig", "rated")}
-            >
-              {t("dig")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending || !selected}
-              onClick={() => log("reception", "rated")}
-            >
-              {t("reception")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending || !selected}
-              onClick={() => log("set", "assist")}
-            >
-              {t("setAssist")}
-            </Button>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-20 text-xs text-muted-foreground">{t("serve")}</span>
+              <Button
+                type="button"
+                disabled={pending || !selected || selected !== serverId}
+                onClick={() => log("serve", "ace")}
+              >
+                {t("ace")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected || selected !== serverId}
+                onClick={() => log("serve", "in")}
+              >
+                {t("inPlay")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected || selected !== serverId}
+                onClick={() => log("serve", "error")}
+              >
+                {t("error")}
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-20 text-xs text-muted-foreground">{t("attack")}</span>
+              <Button
+                type="button"
+                disabled={pending || !selected}
+                onClick={() => log("attack", "kill")}
+              >
+                {t("kill")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("attack", "inPlay")}
+              >
+                {t("inPlay")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("attack", "error")}
+              >
+                {t("error")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("attack", "blocked")}
+              >
+                {t("blocked")}
+              </Button>
+            </div>
+
+            {frontRow ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="w-20 text-xs text-muted-foreground">{t("block")}</span>
+                <Button
+                  type="button"
+                  disabled={pending || !selected}
+                  onClick={() => log("block", "solo")}
+                >
+                  {t("solo")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pending || !selected}
+                  onClick={() => log("block", "assist")}
+                >
+                  {t("assist")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pending || !selected}
+                  onClick={() => log("block", "error")}
+                >
+                  {t("error")}
+                </Button>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-20 text-xs text-muted-foreground">{t("defense")}</span>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("dig", "rated")}
+              >
+                {t("dig")}
+              </Button>
+              <span className="text-xs text-muted-foreground">{t("reception")}</span>
+              {(["rated0", "rated1", "rated2", "rated3"] as const).map((rating, index) => (
+                <Button
+                  key={rating}
+                  type="button"
+                  variant="outline"
+                  disabled={pending || !selected}
+                  onClick={() => log("reception", rating)}
+                >
+                  {index}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-20 text-xs text-muted-foreground">{t("set")}</span>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("set", "assist")}
+              >
+                {t("setAssist")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("set", "error")}
+              >
+                {t("error")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || !selected}
+                onClick={() => log("other", "error")}
+              >
+                {t("otherFault")}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="secondary"
@@ -246,21 +419,16 @@ export function Scoreboard({
                 type="button"
                 variant="outline"
                 disabled={pending || !selected || !benchPlayer}
-                onClick={() =>
-                  run(() =>
-                    logMatchEvent(matchId, {
-                      type: "substitution",
-                      team: "us",
-                      outId: selected ?? "",
-                      inId: benchPlayer,
-                    }),
-                  )
-                }
+                onClick={() => substitute()}
               >
                 {t("substitute")}
               </Button>
             </div>
           ) : null}
+
+          <p className="text-xs text-muted-foreground">
+            {t("subsUsed", { used: subsUsed })}
+          </p>
           </div>
         </>
       )}

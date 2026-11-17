@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
@@ -29,7 +30,7 @@ export default async function MatchPage({
 
   const { data: lineups } = await supabase
     .from("lineups")
-    .select("id, squad_id, name, system, positions, squads (name)")
+    .select("id, squad_id, name, system, positions, libero_id, squads (name)")
     .in(
       "id",
       [match.lineup_id, match.opponent_lineup_id].filter(
@@ -56,18 +57,23 @@ export default async function MatchPage({
     event: row.payload as MatchEventInput,
   }));
 
+  const arrangement = ours.positions as Arrangement;
+  const positions = (Object.keys(arrangement) as unknown as Position[]).sort(
+    (a, b) => Number(a) - Number(b),
+  );
+  const starters = positions.map((position) => arrangement[position]);
+
   const config = {
     bestOf: match.best_of as 3 | 5,
     setPoints: match.set_points,
     firstServe: match.first_serve as "us" | "them",
+    lineups: { us: starters },
   };
 
   const state = matchState(events, config);
 
-  const arrangement = ours.positions as Arrangement;
   const current = rotations(arrangement)[state.rotation.us] ?? arrangement;
-  const playerIds = Object.values(current);
-
+  const playerIds = Array.from(new Set([...starters, ...state.court.us]));
   const { data: players } = await supabase
     .from("players")
     .select("id, full_name, jersey_number")
@@ -101,18 +107,18 @@ export default async function MatchPage({
     stats: Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)),
   }));
 
-  const onCourt: OnCourtPlayer[] = (Object.keys(current) as unknown as Position[])
-    .sort((a, b) => Number(a) - Number(b))
-    .map((position) => {
-      const player = byId.get(current[position]);
-      return {
-        position: Number(position),
-        playerId: current[position],
-        label: player
-          ? `${player.jersey_number ?? ""} ${player.full_name}`.trim()
-          : t("unknownPlayer"),
-      };
-    });
+  const court = state.court.us.length === 6 ? state.court.us : positions.map((position) => current[position]);
+
+  const onCourt: OnCourtPlayer[] = positions.map((position, index) => ({
+    position: Number(position),
+    playerId: court[index]!,
+    label: label(court[index]!),
+  }));
+
+  const libero =
+    ours.libero_id && !playerIds.includes(ours.libero_id)
+      ? { id: ours.libero_id, label: label(ours.libero_id) }
+      : null;
 
   return (
     <div className="flex flex-col gap-8">
@@ -134,11 +140,25 @@ export default async function MatchPage({
         setsWon={state.setsWon}
         rotation={state.rotation.us}
         bench={bench}
+        starters={starters}
+        court={state.court.us}
+        exchanges={state.exchanges.us}
+        subsUsed={state.substitutions.us}
+        libero={libero}
         totals={totals}
         status={match.status}
-        canUndo={canUndo(events)}
+        serverId={state.court.us[0] ?? null}
+        serverLabel={state.court.us[0] ? label(state.court.us[0]) : null}
         opponentName={opponentName}
+        canUndo={canUndo(events)}
       />
+
+      <Link
+        href={`/matches/${match.id}/report`}
+        className="text-sm font-medium underline-offset-4 hover:underline"
+      >
+        {t("report")}
+      </Link>
     </div>
   );
 }
