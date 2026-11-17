@@ -155,4 +155,72 @@ describe("match mode", () => {
 
     expect(error?.code).toBe("42501");
   });
+
+  it("lets the coach rewrite a match's totals and clear the ones it drops", async () => {
+    const as = await world.as(world.coachA);
+
+    const { error: insertError } = await as.from("match_player_totals").insert({
+      match_id: matchId,
+      player_id: world.playerInA.id,
+      totals: { "attack.kill": 1 },
+    });
+
+    expect(insertError).toBeNull();
+
+    const { data: updated, error: updateError } = await as
+      .from("match_player_totals")
+      .update({ totals: { "attack.kill": 2 } })
+      .eq("match_id", matchId)
+      .select("totals");
+
+    expect(updateError).toBeNull();
+    expect(updated).toEqual([{ totals: { "attack.kill": 2 } }]);
+
+    const { data: deleted, error: deleteError } = await as
+      .from("match_player_totals")
+      .delete()
+      .eq("match_id", matchId)
+      .select("player_id");
+
+    expect(deleteError).toBeNull();
+    expect(deleted).toHaveLength(1);
+  });
+
+  it("keeps other coaches and players from rewriting totals", async () => {
+    const asCoachB = await world.as(world.coachB);
+    const asPlayer = await world.as(world.playerA);
+
+    const { error: seedError } = await world.admin
+      .from("match_player_totals")
+      .insert({
+        match_id: matchId,
+        player_id: world.playerInA.id,
+        totals: { "attack.kill": 1 },
+      });
+
+    expect(seedError).toBeNull();
+
+    const { data: fromCoachB, error: coachBError } = await asCoachB
+      .from("match_player_totals")
+      .update({ totals: {} })
+      .eq("match_id", matchId)
+      .select("player_id");
+
+    const { data: fromPlayer } = await asPlayer
+      .from("match_player_totals")
+      .delete()
+      .eq("match_id", matchId)
+      .select("player_id");
+
+    expect(coachBError).toBeNull();
+    expect(fromCoachB).toEqual([]);
+    expect(fromPlayer).toEqual([]);
+
+    const { data: stillThere } = await world.admin
+      .from("match_player_totals")
+      .select("totals")
+      .eq("match_id", matchId);
+
+    expect(stillThere).toEqual([{ totals: { "attack.kill": 1 } }]);
+  });
 });

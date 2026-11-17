@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import {
   finishMatch,
   logMatchEvent,
+  recalculateMatchTotals,
   undoLastEvent,
 } from "@/features/match/actions";
 import {
+  TIMEOUTS_PER_SET,
   substitutionProblem,
   type Exchange,
   type StatAction,
@@ -47,6 +49,7 @@ export function Scoreboard({
   court,
   exchanges,
   subsUsed,
+  timeouts,
   libero,
   finished,
   totals,
@@ -61,6 +64,7 @@ export function Scoreboard({
   court: string[];
   exchanges: Exchange[];
   subsUsed: number;
+  timeouts: { us: number; them: number };
   libero: { id: string; label: string } | null;
   totals: { label: string; stats: [string, number][] }[];
   status: string;
@@ -202,7 +206,31 @@ export function Scoreboard({
             >
               {t("finishMatch")}
             </Button>
-          ) : null}
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={pending || !canUndo}
+                  onClick={() => run(() => undoLastEvent(matchId))}
+                >
+                  {t("undo")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => run(() => recalculateMatchTotals(matchId))}
+                >
+                  {t("recalculateTotals")}
+                </Button>
+              </div>
+              <p className="text-center text-xs text-muted-foreground">
+                {t("correctHint")}
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <>
@@ -395,41 +423,51 @@ export function Scoreboard({
             <Button
               type="button"
               variant="outline"
-              disabled={pending}
+              disabled={pending || timeouts.us >= TIMEOUTS_PER_SET}
               onClick={() => run(() => logMatchEvent(matchId, { type: "timeout", team: "us" }))}
             >
               {t("timeout")}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending || timeouts.them >= TIMEOUTS_PER_SET}
+              onClick={() => run(() => logMatchEvent(matchId, { type: "timeout", team: "them" }))}
+            >
+              {t("opponentTimeout")}
+            </Button>
 
-          {bench.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                aria-label={t("substitute")}
-                className="h-9 rounded-lg border bg-background px-2 text-sm"
-                value={benchPlayer}
-                onChange={(event) => setBenchPlayer(event.target.value)}
-              >
-                {bench.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.label}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pending || !selected || !benchPlayer}
-                onClick={() => substitute()}
-              >
-                {t("substitute")}
-              </Button>
-            </div>
-          ) : null}
+            {bench.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  aria-label={t("substitute")}
+                  className="h-9 rounded-lg border bg-background px-2 text-sm"
+                  value={benchPlayer}
+                  onChange={(event) => setBenchPlayer(event.target.value)}
+                >
+                  {bench.map((player) => (
+                    <option key={player.id} value={player.id}>
+                      {player.label}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pending || !selected || !benchPlayer}
+                  onClick={() => substitute()}
+                >
+                  {t("substitute")}
+                </Button>
+              </div>
+            ) : null}
+          </div>
 
           <p className="text-xs text-muted-foreground">
-            {t("subsUsed", { used: subsUsed })}
+            {t("subsUsed", { used: subsUsed })} ·{" "}
+            {t("timeoutsLeft", { left: TIMEOUTS_PER_SET - timeouts.us })} ·{" "}
+            {t("theirTimeoutsLeft", { left: TIMEOUTS_PER_SET - timeouts.them })}
           </p>
-          </div>
         </>
       )}
 

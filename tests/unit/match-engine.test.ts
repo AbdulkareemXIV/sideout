@@ -145,6 +145,17 @@ describe("limits", () => {
     }) as const);
     expect(matchState(log(...substitutions), config).substitutions.us).toBe(6);
   });
+
+  it("counts the opponent's timeouts on their own side", () => {
+    const timeouts = Array.from(
+      { length: 3 },
+      () => ({ type: "timeout", team: "them" }) as const,
+    );
+    const state = matchState(log(...timeouts), config);
+
+    expect(state.timeouts.them).toBe(2);
+    expect(state.timeouts.us).toBe(0);
+  });
 });
 
 describe("substitutions", () => {
@@ -226,5 +237,63 @@ describe("serving order", () => {
       withSix,
     );
     expect(server.score.us).toBe(1);
+  });
+});
+
+describe("starting a match", () => {
+  const started: MatchEventInput = {
+    type: "match_started",
+    bestOf: 3,
+    setPoints: 25,
+    firstServe: "us",
+    lineupId: "l1",
+    opponentLineupId: "l2",
+  };
+
+  it("keeps the state when the log opens with the start event", () => {
+    const state = matchState(log(started), config);
+
+    expect(state.score).toEqual({ us: 0, them: 0 });
+    expect(state.serving).toBe("us");
+  });
+
+  it("keeps scoring after the start event", () => {
+    const state = matchState(log(started, ourPoint), config);
+
+    expect(state.score).toEqual({ us: 1, them: 0 });
+  });
+
+  it("offers no undo for the start event", () => {
+    expect(undoableEvent(log(started))).toBeNull();
+    expect(undoableEvent(log(started, ourPoint))?.id).toBe("e2");
+  });
+
+  it("offers no undo once the last real event is undone", () => {
+    const undone = [
+      ...log(started, ourPoint),
+      { id: "e3", event: { type: "undo", target: "e2" } } as MatchEvent,
+    ];
+
+    expect(undoableEvent(undone)).toBeNull();
+  });
+
+  it("treats a start event stored without a payload type as not undoable", () => {
+    // Rows written before the payload carried its type still have to read as the
+    // start of the log, not as an action the coach can undo.
+    const legacy: MatchEvent[] = [
+      {
+        id: "e1",
+        event: {
+          bestOf: 3,
+          setPoints: 25,
+          firstServe: "us",
+          lineupId: "l1",
+          opponentLineupId: "l2",
+        } as unknown as MatchEventInput,
+      },
+    ];
+
+    expect(undoableEvent(legacy)).toBeNull();
+    expect(matchState(legacy, config).score).toEqual({ us: 0, them: 0 });
   });
 });

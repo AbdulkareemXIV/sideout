@@ -38,6 +38,11 @@ export async function generateMetadata({
   params,
 }: Props): Promise<Metadata> {
   const { locale } = await params;
+
+  // A request such as /favicon.ico lands here with "favicon.ico" as the segment;
+  // there are no messages for it, so the layout below answers with not-found.
+  if (!hasLocale(routing.locales, locale)) return {};
+
   const t = await getTranslations({ locale, namespace: "Metadata" });
 
   return { title: t("title"), description: t("description") };

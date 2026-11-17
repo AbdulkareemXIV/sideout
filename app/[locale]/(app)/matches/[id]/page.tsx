@@ -3,8 +3,14 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/page-header";
-import { canUndo, matchState, type MatchEvent, type MatchEventInput } from "@/features/match/engine";
 import { rotations, type Arrangement, type Position } from "@/features/lineups/engine";
+import {
+  canUndo,
+  matchState,
+  type MatchEvent,
+  type MatchEventInput,
+} from "@/features/match/engine";
+import { opponentLabel } from "@/features/match/opponent";
 import { createClient } from "@/lib/supabase/server";
 
 import { Scoreboard, type OnCourtPlayer } from "./scoreboard";
@@ -42,9 +48,12 @@ export default async function MatchPage({
   if (!ours) notFound();
 
   const theirs = lineups?.find((lineup) => lineup.id === match.opponent_lineup_id);
-  const opponentName = theirs
-    ? `${theirs.squads?.name ?? ""} ${theirs.name}`.trim()
-    : (match.opponent_name ?? t("opponent"));
+  const opponentName =
+    opponentLabel({
+      squadName: theirs?.squads?.name,
+      lineupName: theirs?.name,
+      name: match.opponent_name,
+    }) ?? t("opponent");
 
   const { data: rows } = await supabase
     .from("match_events")
@@ -144,6 +153,7 @@ export default async function MatchPage({
         court={state.court.us}
         exchanges={state.exchanges.us}
         subsUsed={state.substitutions.us}
+        timeouts={state.timeouts}
         libero={libero}
         totals={totals}
         status={match.status}

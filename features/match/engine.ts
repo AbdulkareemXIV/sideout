@@ -44,6 +44,15 @@ export type StatResult =
 
 export type MatchEventInput =
   | {
+      type: "match_started";
+      bestOf: 3 | 5;
+      setPoints: number;
+      firstServe: Team;
+      lineupId: string;
+      /** Missing when the opponent is a team outside the academy, named by hand. */
+      opponentLineupId?: string;
+    }
+  | {
       type: "stat";
       team: Team;
       playerId: string;
@@ -124,8 +133,6 @@ export function initial(config: MatchConfig): MatchState {
 }
 
 
-
-
 function recordStat(
   state: MatchState,
   event: Extract<MatchEventInput, { type: "stat" }>,
@@ -186,6 +193,10 @@ function apply(state: MatchState, event: MatchEventInput, config: MatchConfig): 
   if (state.finished) return state;
 
   switch (event.type) {
+    // The format and the lineups come from the match row, so opening the log
+    // changes nothing on replay.
+    case "match_started":
+      return state;
     case "stat": {
       const court = state.court[event.team];
       // Serving out of order is blocked: only the player in position 1 serves.
@@ -244,6 +255,10 @@ function apply(state: MatchState, event: MatchEventInput, config: MatchConfig): 
     }
 
     case "undo":
+      return state;
+    default:
+      // Payloads are read back from JSON, so an unknown type must not lose the
+      // state the log has built so far.
       return state;
   }
 }
@@ -310,10 +325,12 @@ export function matchState(
     .reduce((state, entry) => apply(state, entry.event, config), initial(config));
 }
 
+/** The events a coach can take back; opening the log is not one of them. */
+const UNDOABLE = new Set<string>(["stat", "opponent_point", "timeout", "substitution"]);
+
 export function canUndo(events: readonly MatchEvent[]): boolean {
   return undoableEvent(events) !== null;
 }
-
 
 /** The last event an undo would cancel. */
 export function undoableEvent(events: readonly MatchEvent[]): MatchEvent | null {
@@ -326,7 +343,8 @@ export function undoableEvent(events: readonly MatchEvent[]): MatchEvent | null 
 
   for (let index = events.length - 1; index >= 0; index -= 1) {
     const entry = events[index]!;
-    if (entry.event.type !== "undo" && !undone.has(entry.id)) return entry;
+    if (!UNDOABLE.has(entry.event.type)) continue;
+    if (!undone.has(entry.id)) return entry;
   }
 
   return null;

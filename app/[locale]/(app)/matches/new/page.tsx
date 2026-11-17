@@ -33,8 +33,8 @@ export default async function NewMatchPage({
         back={{ href: "/matches", label: t("back") }}
       />
 
-      {options.length < 2 ? (
-        <p className="text-sm text-muted-foreground">{t("needTwoLineups")}</p>
+      {options.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("needLineup")}</p>
       ) : (
         <MatchSetupForm locale={locale} lineups={options} />
       )}

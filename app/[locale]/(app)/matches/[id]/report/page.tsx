@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/page-header";
 import { matchState, type MatchEvent, type MatchEventInput } from "@/features/match/engine";
+import { opponentLabel } from "@/features/match/opponent";
 import { statLabel } from "@/features/match/stat-labels";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,9 +39,12 @@ export default async function MatchReportPage({
 
   const ours = lineups?.find((lineup) => lineup.id === match.lineup_id);
   const theirs = lineups?.find((lineup) => lineup.id === match.opponent_lineup_id);
-  const opponentName = theirs
-    ? `${theirs.squads?.name ?? ""} ${theirs.name}`.trim()
-    : (match.opponent_name ?? t("opponent"));
+  const opponentName =
+    opponentLabel({
+      squadName: theirs?.squads?.name,
+      lineupName: theirs?.name,
+      name: match.opponent_name,
+    }) ?? t("opponent");
 
   const { data: rows } = await supabase
     .from("match_events")
