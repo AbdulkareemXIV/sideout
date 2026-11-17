@@ -63,6 +63,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"lineups": {
+                  Row: {
+                    "created_at": string,"created_by": string,"id": string,"libero_id": string | null,"name": string,"positions": NonNullable<Json>,"receive_formations": NonNullable<Json>,"setter_ids": (string)[],"squad_id": string,"system": Database["public"]['Enums']["lineup_system"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by": string,"id"?: string,"libero_id"?: string | null,"name": string,"positions": NonNullable<Json>,"receive_formations"?: NonNullable<Json>,"setter_ids": (string)[],"squad_id": string,"system": Database["public"]['Enums']["lineup_system"],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string,"id"?: string,"libero_id"?: string | null,"name"?: string,"positions"?: NonNullable<Json>,"receive_formations"?: NonNullable<Json>,"setter_ids"?: (string)[],"squad_id"?: string,"system"?: Database["public"]['Enums']["lineup_system"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lineups_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lineups_libero_id_fkey"
+      columns: ["libero_id"]
+isOneToOne: false
+      referencedRelation: "players"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lineups_squad_id_fkey"
+      columns: ["squad_id"]
+isOneToOne: false
+      referencedRelation: "squads"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"players": {
                   Row: {
                     "created_at": string,"date_of_birth": string | null,"dominant_hand": Database["public"]['Enums']["dominant_hand"],"full_name": string,"height_cm": number | null,"id": string,"jersey_number": number | null,"primary_position": Database["public"]['Enums']["player_position"],"secondary_position": Database["public"]['Enums']["player_position"] | null,"user_id": string | null
@@ -166,7 +198,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "dominant_hand": "right"|"left"|"both","player_position": "outside_hitter"|"opposite"|"setter"|"middle_blocker"|"libero"|"defensive_specialist","user_role": "director"|"coach"|"player"
+            "dominant_hand": "right"|"left"|"both","lineup_system": "5-1"|"6-2"|"4-2","player_position": "outside_hitter"|"opposite"|"setter"|"middle_blocker"|"libero"|"defensive_specialist","user_role": "director"|"coach"|"player"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -286,7 +318,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "dominant_hand": ["right", "left", "both"],"player_position": ["outside_hitter", "opposite", "setter", "middle_blocker", "libero", "defensive_specialist"],"user_role": ["director", "coach", "player"]
+            "dominant_hand": ["right", "left", "both"],"lineup_system": ["5-1", "6-2", "4-2"],"player_position": ["outside_hitter", "opposite", "setter", "middle_blocker", "libero", "defensive_specialist"],"user_role": ["director", "coach", "player"]
           }
         }
 } as const
