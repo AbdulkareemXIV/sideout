@@ -5,7 +5,8 @@
   },
   "Common": {
     "breadcrumbs": "Breadcrumb",
-    "home": "Go to my home page"
+    "home": "Go to my home page",
+    "loading": "Loading…"
   },
   "NotFound": {
     "title": "Page not found",
@@ -93,12 +94,17 @@
     "invalidInput": "Give the squad a name and an age group.",
     "failed": "The squad could not be created. Try again.",
     "required": "Required",
-    "squadCreated": "Squad created."
+    "squadCreated": "Squad created.",
+    "search": "Search squads",
+    "searchPlaceholder": "Name or age group",
+    "noResults": "No squads match “{query}”.",
+    "emptyDirector": "No squads yet. Create the first one above.",
+    "emptyCoach": "No squads are assigned to you yet."
   },
   "Squad": {
     "back": "All squads",
     "roster": "Roster",
-    "emptyRoster": "No players in this squad yet.",
+    "emptyRoster": "No players in this squad yet. Add the first player below.",
     "name": "Player name",
     "jersey": "Jersey number",
     "position": "Position",
@@ -159,6 +165,11 @@
     "passwordResetTitle": "New temporary password",
     "copyPassword": "Copy password",
     "passwordCopied": "Copied",
-    "close": "Close"
+    "close": "Close",
+    "search": "Search players",
+    "searchPlaceholder": "Player name",
+    "filterPosition": "Filter by position",
+    "allPositions": "All positions",
+    "noResults": "No players match your search."
   }
 }

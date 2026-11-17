@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { FilterSelect, SearchField } from "@/components/list-filters";
 import { PageHeader } from "@/components/page-header";
 import { redirect } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -15,10 +16,21 @@ import {
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ q?: string; position?: string }>;
 };
 
-export default async function SquadPage({ params }: Props) {
+const positions = [
+  "outside_hitter",
+  "opposite",
+  "setter",
+  "middle_blocker",
+  "libero",
+  "defensive_specialist",
+] as const;
+
+export default async function SquadPage({ params, searchParams }: Props) {
   const { locale, id } = await params;
+  const { q, position } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -62,6 +74,13 @@ export default async function SquadPage({ params }: Props) {
           .in("id", playerIds)
           .order("jersey_number")
       : { data: [] };
+
+  const query = (q ?? "").trim().toLowerCase();
+  const visiblePlayers = (players ?? []).filter(
+    (player) =>
+      (!query || player.full_name.toLowerCase().includes(query)) &&
+      (!position || player.primary_position === position),
+  );
 
   const { data: assignments } = await supabase
     .from("coach_assignments")
@@ -124,8 +143,28 @@ export default async function SquadPage({ params }: Props) {
         <h2 className="text-xl font-semibold">{t("roster")}</h2>
 
         {players && players.length > 0 ? (
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-64 flex-1">
+              <SearchField
+                label={t("search")}
+                placeholder={t("searchPlaceholder")}
+              />
+            </div>
+            <FilterSelect
+              param="position"
+              label={t("filterPosition")}
+              allLabel={t("allPositions")}
+              options={positions.map((value) => ({
+                value,
+                label: t(`positions.${value}`),
+              }))}
+            />
+          </div>
+        ) : null}
+
+        {visiblePlayers.length > 0 ? (
           <ul className="flex flex-col gap-3">
-            {players.map((player) => (
+            {visiblePlayers.map((player) => (
               <li key={player.id} className="rounded-lg border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-col">
@@ -161,6 +200,8 @@ export default async function SquadPage({ params }: Props) {
               </li>
             ))}
           </ul>
+        ) : players && players.length > 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noResults")}</p>
         ) : (
           <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
         )}
