@@ -163,7 +163,8 @@
     "searchPlaceholder": "اسم اللاعب",
     "filterPosition": "تصفية حسب المركز",
     "allPositions": "كل المراكز",
-    "noResults": "لا يوجد لاعب يطابق بحثك."
+    "noResults": "لا يوجد لاعب يطابق بحثك.",
+    "lineups": "التشكيلات"
   },
   "Lineups": {
     "title": "التشكيلات",

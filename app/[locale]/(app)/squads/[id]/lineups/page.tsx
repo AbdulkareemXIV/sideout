@@ -54,7 +54,6 @@ export default async function LineupsPage({ params, searchParams }: Props) {
   );
 
   const t = await getTranslations("Lineups");
-  const tSquad = await getTranslations("Squad");
   const tSquads = await getTranslations("Squads");
   const common = await getTranslations("Common");
 
@@ -135,9 +134,7 @@ export default async function LineupsPage({ params, searchParams }: Props) {
       )}
 
       {!canManage ? (
-        <p className="text-sm text-muted-foreground">
-          {tSquad("players", { count: 0 }).length > 0 ? t("viewOnly") : null}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("viewOnly")}</p>
       ) : null}
     </div>
   );

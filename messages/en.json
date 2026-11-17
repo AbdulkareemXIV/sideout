@@ -163,7 +163,8 @@
     "searchPlaceholder": "Player name",
     "filterPosition": "Filter by position",
     "allPositions": "All positions",
-    "noResults": "No players match your search."
+    "noResults": "No players match your search.",
+    "lineups": "Lineups"
   },
   "Lineups": {
     "title": "Lineups",
