@@ -189,4 +189,15 @@ describe("validating a lineup", () => {
       validateLineup({ ...valid, setterIds: ["bench"] }),
     ).toContainEqual({ kind: "setterNotOnCourt", players: ["bench"] });
   });
+
+  it("refuses a libero who is also a setter", () => {
+    expect(validateLineup({ ...valid, liberoId: "p1" })).toContainEqual({
+      kind: "liberoIsSetter",
+      players: ["p1"],
+    });
+  });
+
+  it("accepts a libero who is not a setter", () => {
+    expect(validateLineup({ ...valid, liberoId: "p4" })).toEqual([]);
+  });
 });

@@ -103,7 +103,7 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
 
   const flagged = new Set(violations.flatMap((violation) => violation.positions));
 
-  const canEditCourt = canManage && rotation === 0 && mode === "serve";
+  const canPlace = canManage && mode === "serve";
   const canMoveTokens = canManage && mode === "receive";
 
   function nameOf(id: string | undefined | null) {
@@ -120,16 +120,25 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
       : player.fullName;
   }
 
-  function placePlayer(position: Position, playerId: string) {
+  /**
+   * The slot on screen depends on the rotation being viewed; the lineup itself
+   * stores the starting arrangement, so map back to that slot.
+   */
+  function baseSlotFor(slot: Position): Position {
+    const index = (((slot - 1 - rotation) % 6) + 6) % 6;
+    return POSITIONS[index]!;
+  }
+
+  function placePlayer(slot: Position, playerId: string) {
     const from = POSITIONS.find(
       (candidate) => positions[candidate] === playerId,
     );
 
     setPositions((previous) => {
-      const next = { ...previous, [position]: playerId };
+      const next = { ...previous, [slot]: playerId };
 
-      if (from && from !== position) {
-        const displaced = previous[position];
+      if (from && from !== slot) {
+        const displaced = previous[slot];
         if (displaced) {
           next[from] = displaced;
         } else {
@@ -142,28 +151,46 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
     setHeld(null);
   }
 
-  function onSlotClick(position: Position) {
-    if (!canEditCourt) {
+  function onSlotClick(slot: Position) {
+    if (!canPlace) {
       return;
     }
 
     if (!held) {
-      const standing = positions[position];
+      const standing = current[slot];
       if (standing) {
         setHeld(standing);
       }
       return;
     }
 
-    if (held === positions[position]) {
+    const target = baseSlotFor(slot);
+    if (positions[target] === held) {
       setHeld(null);
       return;
     }
 
-    placePlayer(position, held);
+    placePlayer(target, held);
+  }
+
+  function dropAt(clientX: number, clientY: number, playerId: string) {
+    const drop = pointFromEvent(clientX, clientY);
+    const nearest = POSITIONS.reduce((best, candidate) => {
+      const distance = (position: Position) => {
+        const point = tokenPoints[position];
+        return (point.x - drop.x) ** 2 + (point.y - drop.y) ** 2;
+      };
+      return distance(candidate) < distance(best) ? candidate : best;
+    }, POSITIONS[0]!);
+
+    placePlayer(baseSlotFor(nearest), playerId);
   }
 
   function toggleSetter(playerId: string) {
+    if (liberoId === playerId) {
+      setLiberoId(null);
+    }
+
     setSetterIds((previous) => {
       if (previous.includes(playerId)) {
         return previous.filter((id) => id !== playerId);
@@ -172,6 +199,14 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
       const next = [...previous, playerId];
       return next.slice(-setterCount(system));
     });
+  }
+
+  function chooseLibero(playerId: string | null) {
+    if (playerId) {
+      setSetterIds((previous) => previous.filter((id) => id !== playerId));
+    }
+
+    setLiberoId(playerId);
   }
 
   function changeSystem(next: System) {
@@ -204,7 +239,7 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
   }
 
   function save() {
-    const found = validateLineup({ system, positions, setterIds });
+    const found = validateLineup({ system, positions, setterIds, liberoId });
     const missingName = name.trim().length === 0;
 
     if (missingName || found.length > 0) {
@@ -356,6 +391,15 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
           <div
             ref={courtRef}
             aria-label={t("court")}
+            onDragOver={(event) => {
+              if (canManage) event.preventDefault();
+            }}
+            onDrop={(event) => {
+              if (!canManage) return;
+              event.preventDefault();
+              const dropped = event.dataTransfer.getData("text/plain");
+              if (dropped) dropAt(event.clientX, event.clientY, dropped);
+            }}
             className="relative aspect-4/3 w-full overflow-hidden rounded-xl border-2 border-primary/60 bg-secondary"
           >
             <div className="absolute inset-x-0 top-0 h-1 bg-accent" />
@@ -373,18 +417,9 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
                 <button
                   key={position}
                   type="button"
-                  draggable={canEditCourt && Boolean(playerId)}
+                  draggable={canManage && Boolean(playerId)}
                   onDragStart={(event) => {
                     if (playerId) event.dataTransfer.setData("text/plain", playerId);
-                  }}
-                  onDragOver={(event) => {
-                    if (canEditCourt) event.preventDefault();
-                  }}
-                  onDrop={(event) => {
-                    if (!canEditCourt) return;
-                    event.preventDefault();
-                    const dropped = event.dataTransfer.getData("text/plain");
-                    if (dropped) placePlayer(position, dropped);
                   }}
                   onClick={() => onSlotClick(position)}
                   onPointerDown={(event) => {
@@ -448,7 +483,7 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
                     isSetter ? "border-accent" : "",
                     isFlagged ? "border-destructive text-destructive" : "",
                     isHeld ? "ring-2 ring-accent ring-offset-2" : "",
-                    canMoveTokens ? "cursor-grab" : canEditCourt ? "cursor-pointer" : "cursor-default",
+                    canMoveTokens ? "cursor-grab" : canPlace ? "cursor-pointer" : "cursor-default",
                   ].join(" ")}
                 >
                   <span className="text-[0.65rem] font-semibold uppercase tracking-wide">
@@ -579,7 +614,7 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
                 <select
                   id="lineup-libero"
                   value={liberoId ?? ""}
-                  onChange={(event) => setLiberoId(event.target.value || null)}
+                  onChange={(event) => chooseLibero(event.target.value || null)}
                   className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm shadow-xs"
                 >
                   <option value="">{t("noLibero")}</option>
@@ -610,7 +645,11 @@ export function LineupEditor({ squadId, lineup, players, canManage }: Props) {
                           ? t("problems.setterCount", { expected: problem.expected })
                           : problem.kind === "setterNotOnCourt"
                             ? t("problems.setterNotOnCourt")
-                            : t("problems.missingName")}
+                            : problem.kind === "liberoIsSetter"
+                              ? t("problems.liberoIsSetter", {
+                                  player: label(problem.players[0]),
+                                })
+                              : t("problems.missingName")}
                   </li>
                 ))}
               </ul>

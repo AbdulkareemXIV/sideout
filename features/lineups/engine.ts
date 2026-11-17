@@ -127,12 +127,14 @@ export type LineupProblem =
   | { kind: "missingPositions"; positions: Position[] }
   | { kind: "duplicatePlayers"; players: string[] }
   | { kind: "setterCount"; expected: number; found: number }
-  | { kind: "setterNotOnCourt"; players: string[] };
+  | { kind: "setterNotOnCourt"; players: string[] }
+  | { kind: "liberoIsSetter"; players: string[] };
 
 export type LineupInput = {
   system: System;
   positions: Partial<Record<Position, string | null>>;
   setterIds: readonly string[];
+  liberoId?: string | null;
 };
 
 /** Everything that must be true before a lineup can be saved. */
@@ -140,6 +142,7 @@ export function validateLineup({
   system,
   positions,
   setterIds,
+  liberoId = null,
 }: LineupInput): LineupProblem[] {
   const problems: LineupProblem[] = [];
 
@@ -171,5 +174,9 @@ export function validateLineup({
     problems.push({ kind: "setterNotOnCourt", players: absent });
   }
 
+  // A libero may never set, and a setter may never play as libero.
+  if (liberoId && setters.includes(liberoId)) {
+    problems.push({ kind: "liberoIsSetter", players: [liberoId] });
+  }
   return problems;
 }

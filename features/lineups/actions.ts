@@ -33,6 +33,7 @@ export async function saveLineup(
     system: lineup.system,
     positions: lineup.positions,
     setterIds: lineup.setterIds,
+    liberoId: lineup.liberoId,
   });
 
   if (problems.length > 0) {
