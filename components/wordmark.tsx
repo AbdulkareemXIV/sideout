@@ -15,7 +15,7 @@ export function Wordmark({ className }: { className?: string }) {
       >
         <circle cx="12" cy="12" r="10" className="fill-primary" />
         <path
-          d="M12 2c3.2 2.6 4.6 6 4.6 10S15.2 19.4 12 22M12 2C8.8 4.6 7.4 8 7.4 12s1.4 7.4 4.6 10M2.4 9.2c4.6 1.2 14.6 1.2 19.2 0M2.4 14.8c4.6-1.2 14.6-1.2 19.2 0"
+          d="M11.1 7.1a16.55 16.55 0 0 1 10.9 4M12 12a12.6 12.6 0 0 1-8.7 5M16.8 13.6a16.55 16.55 0 0 1-9 7.5M20.7 17a12.8 12.8 0 0 0-8.7-5 13.3 13.3 0 0 1 0-10M6.3 3.8a16.55 16.55 0 0 0 1.9 11.5"
           className="stroke-foreground"
           strokeWidth="1.1"
         />

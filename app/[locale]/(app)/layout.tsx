@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 import { AppNav, type NavItem } from "@/components/app-nav";
+import { SessionRefresh } from "@/components/session-refresh";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { Wordmark } from "@/components/wordmark";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { signOut } from "@/lib/auth/actions";
 import { Link } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+// Signed-in screens are per-request only: no browser or CDN copy survives sign-out.
+export const revalidate = 0;
 
 type Props = {
   children: React.ReactNode;
@@ -87,6 +91,7 @@ export default async function AppLayout({ children, params }: Props) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         {children}
       </main>
+      <SessionRefresh />
       <Toaster />
     </div>
   );

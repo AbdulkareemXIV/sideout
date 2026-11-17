@@ -1,9 +1,11 @@
 import { getTranslations } from "next-intl/server";
+import { Volleyball } from "lucide-react";
 import { notFound } from "next/navigation";
-
 import { FilterSelect, SearchField } from "@/components/list-filters";
 import { PageHeader } from "@/components/page-header";
-import { redirect } from "@/lib/i18n/navigation";
+import { buttonVariants } from "@/components/ui/button";
+
+import { Link, redirect } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -117,6 +119,11 @@ export default async function SquadPage({ params, searchParams }: Props) {
         .order("age_group")
     : { data: [] };
 
+  const { count: lineupCount } = await supabase
+    .from("lineups")
+    .select("id", { count: "exact", head: true })
+    .eq("squad_id", squad.id);
+
   const t = await getTranslations("Squad");
   const tSquads = await getTranslations("Squads");
   const common = await getTranslations("Common");
@@ -132,6 +139,20 @@ export default async function SquadPage({ params, searchParams }: Props) {
           count: playerIds.length,
         })}`}
         back={{ href: "/squads", label: t("back") }}
+        actions={
+          <Link
+            href={`/squads/${squad.id}/lineups`}
+            className={buttonVariants({ className: "gap-2" })}
+          >
+            <Volleyball aria-hidden="true" />
+            {t("lineups")}
+            {lineupCount ? (
+              <span className="rounded-full bg-primary-foreground/20 px-1.5 text-xs">
+                {lineupCount}
+              </span>
+            ) : null}
+          </Link>
+        }
         breadcrumbsLabel={common("breadcrumbs")}
         breadcrumbs={[
           { label: tSquads("title"), href: "/squads" },
