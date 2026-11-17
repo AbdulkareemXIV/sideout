@@ -53,7 +53,10 @@ export default async function AppLayout({ children, params }: Props) {
   const home = await getTranslations("Home");
   const roles = await getTranslations("Roles");
 
-  const items: NavItem[] = [{ href: "/squads", label: t("squads") }];
+  const items: NavItem[] = [
+    { href: "/squads", label: t("squads") },
+    { href: "/matches", label: t("matches") },
+  ];
 
   if (profile.role === "director") {
     items.push({ href: "/academy", label: t("academy") });
