@@ -1,5 +1,12 @@
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
+import { AppNav, type NavItem } from "@/components/app-nav";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { Wordmark } from "@/components/wordmark";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/auth/actions";
+import { Link } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -20,7 +27,7 @@ export default async function AppLayout({ children, params }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("must_change_password")
+    .select("full_name, role, must_change_password")
     .eq("id", user.id)
     .single();
 
@@ -32,5 +39,53 @@ export default async function AppLayout({ children, params }: Props) {
     redirect(`/${locale}/change-password`);
   }
 
-  return <>{children}</>;
+  const { data: academy } = await supabase
+    .from("academy")
+    .select("name")
+    .single();
+
+  const t = await getTranslations("Nav");
+  const home = await getTranslations("Home");
+  const roles = await getTranslations("Roles");
+
+  const items: NavItem[] = [{ href: "/squads", label: t("squads") }];
+
+  if (profile.role === "director") {
+    items.push({ href: "/academy", label: t("academy") });
+  }
+
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <header className="border-b bg-card">
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
+          <Link href="/" aria-label={t("home")} className="order-1">
+            <Wordmark />
+          </Link>
+          {academy?.name ? (
+            <span className="order-2 hidden text-sm text-muted-foreground sm:block">
+              {academy.name}
+            </span>
+          ) : null}
+          <AppNav items={items} labels={{ label: t("label"), menu: t("menu") }} />
+          <div className="order-3 ms-auto flex items-center gap-3">
+            <span className="hidden text-end text-xs leading-tight sm:block">
+              <span className="block font-medium">{profile.full_name}</span>
+              <span className="block text-muted-foreground">
+                {roles(profile.role)}
+              </span>
+            </span>
+            <LocaleSwitcher />
+            <form action={signOut.bind(null, locale)}>
+              <Button type="submit" variant="ghost" size="sm">
+                {home("signOut")}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+        {children}
+      </main>
+    </div>
+  );
 }

@@ -10,7 +10,10 @@
   },
   "Nav": {
     "squads": "Squads",
-    "academy": "Academy settings"
+    "academy": "Academy settings",
+    "label": "Sections",
+    "menu": "Menu",
+    "home": "Sideout home"
   },
   "Home": {
     "signedInAs": "Signed in as {name}",

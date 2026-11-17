@@ -4,7 +4,6 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getDirection } from "@/lib/i18n/direction";
 import { routing } from "@/lib/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -63,9 +62,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     >
       <body>
         <NextIntlClientProvider>
-          <header className="flex justify-end border-b px-4 py-2">
-            <LocaleSwitcher />
-          </header>
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
           {children}
         </NextIntlClientProvider>
       </body>
