@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { PageHeader } from "@/components/page-header";
 import { redirect } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,18 +40,16 @@ export default async function AcademyPage({ params }: Props) {
 
   if (!academy) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-4 py-16">
+      <div className="flex flex-col gap-6">
+        <PageHeader title={t("title")} description={t("subtitle")} />
         <p className="text-sm text-muted-foreground">{t("missing")}</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-16">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("subtitle")}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
       <AcademyForm
         defaults={{
@@ -61,6 +60,6 @@ export default async function AcademyPage({ params }: Props) {
           defaultSetPoints: academy.default_set_points,
         }}
       />
-    </main>
+    </div>
   );
 }

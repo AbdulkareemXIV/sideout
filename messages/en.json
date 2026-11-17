@@ -3,6 +3,21 @@
     "title": "Sideout Academy",
     "description": "Squads, practices, matches and player development in one place."
   },
+  "Common": {
+    "breadcrumbs": "Breadcrumb",
+    "home": "Go to my home page"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "This page does not exist, or you do not have access to it.",
+    "home": "Go to my home page"
+  },
+  "Error": {
+    "title": "Something went wrong",
+    "description": "The page could not be loaded. Try again, or go back to your home page.",
+    "retry": "Try again",
+    "home": "Go to my home page"
+  },
   "LocaleSwitcher": {
     "label": "Language",
     "en": "English",

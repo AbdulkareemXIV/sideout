@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { PageHeader } from "@/components/page-header";
 import { redirect } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,11 +46,8 @@ export default async function SquadsPage({ params }: Props) {
   const t = await getTranslations("Squads");
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-16">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("subtitle")}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
       {profile?.role === "director" ? <NewSquadForm /> : null}
 
@@ -75,6 +73,6 @@ export default async function SquadsPage({ params }: Props) {
       ) : (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       )}
-    </main>
+    </div>
   );
 }

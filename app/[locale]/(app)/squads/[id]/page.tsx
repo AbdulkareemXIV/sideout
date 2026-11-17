@@ -1,7 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { Link, redirect } from "@/lib/i18n/navigation";
+import { PageHeader } from "@/components/page-header";
+import { redirect } from "@/lib/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -99,23 +100,25 @@ export default async function SquadPage({ params }: Props) {
 
   const t = await getTranslations("Squad");
   const tSquads = await getTranslations("Squads");
-
+  const common = await getTranslations("Common");
   const unassigned = (assignable ?? []).filter(
     (candidate) => !coachIds.includes(candidate.id),
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-16">
-      <div className="flex flex-col gap-1">
-        <Link href="/squads" className="text-sm text-muted-foreground">
-          {t("back")}
-        </Link>
-        <h1 className="text-3xl font-semibold">{squad.name}</h1>
-        <p className="text-muted-foreground">
-          {squad.age_group} ·{" "}
-          {tSquads("players", { count: playerIds.length })}
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title={squad.name}
+        description={`${squad.age_group} · ${tSquads("players", {
+          count: playerIds.length,
+        })}`}
+        back={{ href: "/squads", label: t("back") }}
+        breadcrumbsLabel={common("breadcrumbs")}
+        breadcrumbs={[
+          { label: tSquads("title"), href: "/squads" },
+          { label: squad.name },
+        ]}
+      />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">{t("roster")}</h2>
@@ -193,6 +196,6 @@ export default async function SquadPage({ params }: Props) {
           <AssignCoachForm squadId={squad.id} coaches={unassigned} />
         ) : null}
       </section>
-    </main>
+    </div>
   );
 }
