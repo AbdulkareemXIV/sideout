@@ -57,18 +57,18 @@ export default async function AppLayout({ children, params }: Props) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b bg-card">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
-          <Link href="/" aria-label={t("home")} className="order-1">
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-2.5">
+          <Link href="/" aria-label={t("home")}>
             <Wordmark />
           </Link>
           {academy?.name ? (
-            <span className="order-2 hidden text-sm text-muted-foreground sm:block">
+            <span className="text-sm text-muted-foreground">
               {academy.name}
             </span>
           ) : null}
-          <AppNav items={items} labels={{ label: t("label"), menu: t("menu") }} />
-          <div className="order-3 ms-auto flex items-center gap-3">
-            <span className="hidden text-end text-xs leading-tight sm:block">
+          <AppNav items={items} label={t("label")} />
+          <div className="ms-auto flex items-center gap-3">
+            <span className="text-end text-xs leading-tight">
               <span className="block font-medium">{profile.full_name}</span>
               <span className="block text-muted-foreground">
                 {roles(profile.role)}

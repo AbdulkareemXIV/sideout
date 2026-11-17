@@ -10,7 +10,7 @@ For the demo, the academy is filled with fictional people and a season of histor
 
 ### Acceptance criteria
 
-- A coach can run a full match in match mode on a phone or tablet, with undo, and the stats appear on player profiles afterwards.
+- A coach can run a full match in match mode in a desktop browser, with undo, and the stats appear on player profiles afterwards.
 - Rotation faults and overlap errors are detected correctly, verified by automated tests.
 - A coach cannot see or modify data from squads they are not assigned to, enforced at the database level.
 - The application is publicly deployed with a working demo account for each role.
@@ -86,7 +86,7 @@ An interactive court for building and checking lineups.
 
 ### 3. Match mode
 
-One screen that combines a digital scoresheet and a live stat tracker. Designed for a phone or tablet held courtside.
+One screen that combines a digital scoresheet and a live stat tracker. Designed to be run from a laptop courtside.
 
 **Setup.** The coach selects the squad, the opponent (an outside team by name, or another squad in the academy for internal scrimmages, logged from one squad's side with the other treated as the opponent), match format (best of 3 or 5), points per set (25 by default, or shorter for youth matches), the starting lineup and which team serves first.
 
@@ -430,8 +430,8 @@ A player with fewer than 10 attempts in a category shows the metric greyed out, 
 
 | Area | Requirement |
 | --- | --- |
-| Responsiveness | Logging a stat takes two taps and updates the score and rotation on screen straight away. |
-| Devices | Match mode is designed for phones and tablets in portrait and landscape, with touch targets at least 48 px. Management screens work on desktop and mobile. Times are stored in UTC and shown in the Asia/Riyadh time zone. |
+| Responsiveness | Logging a stat takes two clicks and updates the score and rotation on screen straight away. |
+| Devices | Desktop browsers only: the site is not supported on phones or tablets, and layouts are designed for laptop and desktop screens. Times are stored in UTC and shown in the Asia/Riyadh time zone. |
 | Languages | The interface is built with an internationalization layer. English and Arabic are both supported from the start, with full right-to-left layout for Arabic. Arabic text is drafted with the AI and reviewed by a native speaker. Translations use next-intl. |
 | Accessibility | Sufficient color contrast, keyboard navigation on desktop, and court diagrams that never rely on color alone (positions are also numbered). |
 | Reliability | Every write is validated on the server. Replaying the same event log always produces the same result. |
@@ -440,7 +440,7 @@ A player with fewer than 10 attempts in a category shows the metric greyed out, 
 
 ## Interface and user experience
 
-Sideout should feel like a finished product, not a prototype. Simplicity applies to code and scope, never to how the site feels to use. These rules apply to every screen, including screens the modules do not describe in detail.
+Sideout should feel like a finished product, not a prototype. Simplicity applies to code and scope, never to how the site feels to use. These rules apply to every screen, including screens the modules do not describe in detail. Sideout runs in desktop browsers only, so no screen needs a phone layout.
 
 ### Visual identity
 
@@ -451,7 +451,7 @@ Sideout should feel like a finished product, not a prototype. Simplicity applies
 
 ### Layout and navigation
 
-- Signed-in users get one app shell: a header with the academy name, the user's name and role, the language switch and sign-out, and a navigation menu listing only the sections their role can reach, with the current section highlighted. On phones the menu collapses behind a menu button.
+- Signed-in users get one app shell: a header with the academy name, the user's name and role, the language switch and sign-out, and a navigation menu listing only the sections their role can reach, with the current section highlighted.
 - Every page has a clear title. Pages below the top level show breadcrumbs (for example Squads › U16 › Sara) and a back link to the parent page.
 - After sign-in, each role lands on a sensible home page: the director on the academy overview (the squads list until the dashboard exists), a coach on their squads, a player on their own profile.
 - Unknown or refused addresses show a friendly page with a link home, never a raw error.
@@ -467,14 +467,13 @@ Sideout should feel like a finished product, not a prototype. Simplicity applies
 
 ### Lists and data
 
-- Lists longer than one screen have search, plus filters where useful (for example by position). Tables become stacked cards on phones.
+- Lists longer than one screen have search, plus filters where useful (for example by position).
 - Names link to their detail pages.
 - Dates, times and numbers are formatted for the active language.
 
 ### Accessibility
 
 - Everything works with a keyboard, focus is always visible, and dialogs trap focus and close with Escape.
-- Touch targets are at least 44 px.
 
 ## Build order
 
@@ -591,5 +590,5 @@ This section is written for the AI model assisting with development. This docume
 - Requirements in this document are met.
 - Unit tests cover the logic; database tests cover any new access rules.
 - Type checking, linting and all tests pass in CI.
-- The feature works on a phone-sized screen, in both English and Arabic, and meets the Interface and user experience section.
+- The feature works in both English and Arabic and meets the Interface and user experience section.
 - The seed data exercises the feature so it can be demonstrated.
