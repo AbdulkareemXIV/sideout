@@ -13,16 +13,11 @@ import { updateAcademy, type AcademyState } from "@/features/academy/actions";
 
 const initialState: AcademyState = { error: null, saved: false };
 
-const selectClassName =
-  "border-input bg-background h-9 w-full rounded-md border px-3 text-sm shadow-xs";
-
 type Props = {
   defaults: {
     name: string;
     seasonStart: string;
     seasonEnd: string;
-    defaultBestOf: number;
-    defaultSetPoints: number;
   };
 };
 
@@ -101,35 +96,6 @@ export function AcademyForm({ defaults }: Props) {
             id="season-end-error"
             message={fieldError("seasonEnd")}
           />
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="defaultBestOf">{t("defaultBestOf")}</Label>
-          <select
-            id="defaultBestOf"
-            name="defaultBestOf"
-            className={selectClassName}
-            defaultValue={defaults.defaultBestOf}
-          >
-            <option value="3">{t("bestOf3")}</option>
-            <option value="5">{t("bestOf5")}</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="defaultSetPoints">{t("defaultSetPoints")}</Label>
-          <select
-            id="defaultSetPoints"
-            name="defaultSetPoints"
-            className={selectClassName}
-            defaultValue={defaults.defaultSetPoints}
-          >
-            <option value="15">{t("points15")}</option>
-            <option value="21">{t("points21")}</option>
-            <option value="25">{t("points25")}</option>
-          </select>
         </div>
       </div>
 

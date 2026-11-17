@@ -250,8 +250,6 @@ async function main() {
     name: "Sideout Academy",
     season_start: "2026-09-01",
     season_end: "2027-06-30",
-    default_best_of: 5,
-    default_set_points: 25,
   });
 
   if (academyError) {

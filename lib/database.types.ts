@@ -25,14 +25,14 @@ export type Database = {
           Tables: {
             "academy": {
                   Row: {
-                    "created_at": string,"default_best_of": number,"default_set_points": number,"id": string,"logo_url": string | null,"name": string,"season_end": string,"season_start": string
+                    "created_at": string,"id": string,"logo_url": string | null,"name": string,"season_end": string,"season_start": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"default_best_of"?: number,"default_set_points"?: number,"id"?: string,"logo_url"?: string | null,"name": string,"season_end": string,"season_start": string
+                    "created_at"?: string,"id"?: string,"logo_url"?: string | null,"name": string,"season_end": string,"season_start": string
                   }
                   Update: {
-                    "created_at"?: string,"default_best_of"?: number,"default_set_points"?: number,"id"?: string,"logo_url"?: string | null,"name"?: string,"season_end"?: string,"season_start"?: string
+                    "created_at"?: string,"id"?: string,"logo_url"?: string | null,"name"?: string,"season_end"?: string,"season_start"?: string
                   }
                   Relationships: [
                     

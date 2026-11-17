@@ -25,13 +25,10 @@ export async function updateAcademy(
   if (!user) {
     return { error: "forbidden", saved: false };
   }
-
   const parsed = academySchema.safeParse({
     name: formData.get("name"),
     seasonStart: formData.get("seasonStart"),
     seasonEnd: formData.get("seasonEnd"),
-    defaultBestOf: formData.get("defaultBestOf"),
-    defaultSetPoints: formData.get("defaultSetPoints"),
   });
 
   if (!parsed.success) {
@@ -54,8 +51,6 @@ export async function updateAcademy(
       name: parsed.data.name,
       season_start: parsed.data.seasonStart,
       season_end: parsed.data.seasonEnd,
-      default_best_of: parsed.data.defaultBestOf,
-      default_set_points: parsed.data.defaultSetPoints,
     })
     .eq("id", academy.id)
     .select("id");

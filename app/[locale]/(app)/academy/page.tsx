@@ -33,7 +33,7 @@ export default async function AcademyPage({ params }: Props) {
 
   const { data: academy } = await supabase
     .from("academy")
-    .select("name, season_start, season_end, default_best_of, default_set_points")
+    .select("name, season_start, season_end")
     .single();
 
   const t = await getTranslations("Academy");
@@ -56,8 +56,6 @@ export default async function AcademyPage({ params }: Props) {
           name: academy.name,
           seasonStart: academy.season_start,
           seasonEnd: academy.season_end,
-          defaultBestOf: academy.default_best_of,
-          defaultSetPoints: academy.default_set_points,
         }}
       />
     </div>

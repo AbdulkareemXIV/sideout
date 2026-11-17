@@ -56,7 +56,7 @@ Sideout is made of seven modules.
 The foundation every other module builds on.
 
 - Each deployment serves one academy. The academy and its director account are created by the seed script; there is no academy sign-up.
-- The academy has a name, logo and settings: current season dates, default match format and default points per set.
+- The academy has a name, logo and current season dates. Match format and points per set are chosen per match in match mode, not stored as academy settings.
 - Squads are grouped by age or level, for example U14, U16, U18 and Senior.
 - Players have a profile record (name, date of birth, jersey number, primary and secondary positions, dominant hand, height) and belong to exactly one squad at a time.
 - Every player has a read-only account linked to their profile (see Accounts below).
@@ -248,7 +248,7 @@ The database is relational (PostgreSQL). Each deployment holds one academy, so t
 
 | Entity | Module | Key fields |
 | --- | --- | --- |
-| academy | 1 | a single row: name, logo\_url, season\_start, season\_end, default\_best\_of, default\_set\_points |
+| academy | 1 | a single row: name, logo\_url, season\_start, season\_end |
 | profiles | 1 | id (auth user id), role (director, coach, player), username, full\_name, must\_change\_password, preferred\_language |
 | squads | 1 | name, age\_group |
 | coach\_assignments | 1 | coach\_id, squad\_id |
