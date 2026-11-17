@@ -46,6 +46,10 @@ npm run dev
 
 ## Demo logins
 
+The same four usernames exist everywhere; the passwords differ by environment.
+
+### Local copy, after `npm run setup`
+
 | Username | Password | What it shows |
 | --- | --- | --- |
 | `director` | `Demo1234!` | The whole academy |
@@ -53,11 +57,24 @@ npm run dev
 | `layla.u18` | `Demo1234!` | That coaches cannot see each other's squads |
 | `noura.u16` | `Demo1234!` | The read-only player view |
 
-The four demo accounts sign in directly. The other seeded players start on
-`Demo1234!` too and are asked to choose a new password on their first sign-in.
+The passwords above only work on a local copy seeded by `npm run setup`. They
+come from `DEMO_*_PASSWORD` in `.env.local`; `.env.example` holds the defaults.
 
-Passwords come from `DEMO_*_PASSWORD` in `.env.local`; `.env.example` holds the
-local defaults. The live site uses different values, set in Vercel.
+### Live site and previews
+
+| Username | Password | What it shows |
+| --- | --- | --- |
+| `director` | shared privately | The whole academy |
+| `omar.u16` | shared privately | A coach's view |
+| `layla.u18` | shared privately | That coaches cannot see each other's squads |
+| `noura.u16` | shared privately | The read-only player view |
+
+The live site and its previews use different passwords, set in the hosting
+environment and never committed here. Ask whoever runs the deployment for them.
+
+On either environment, the four demo accounts sign in directly. The other seeded
+players start on the same demo password and are asked to choose a new one on
+their first sign-in.
 
 ## Tests
 
